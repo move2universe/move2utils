@@ -1,0 +1,238 @@
+---
+title: "Interpolating and thinning trajectories"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Interpolating and thinning trajectories}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.width  = 7,
+  fig.height = 5,
+  message = TRUE
+)
+```
+
+Real tracks are sampled irregularly, and some downstream analyses assume either 
+regular sampling or a specific geometry. This vignette covers:
+
+- **Interpolation** — producing additional locations at a desired
+  cadence or along a target line. Handled by `move2::mt_interpolate()`.
+- **Time-thinning** — downsampling a dense track to a target cadence.
+  Two complementary helpers: `move2::mt_filter_per_interval()` for
+  the bucketed case, and `move2utils::mt_thin_time()` for
+  tolerance-constrained downsampling.
+- **Distance-thinning** — downsampling based on cumulative travel
+  distance. Provided by `move2utils::mt_thin_distance()`.
+
+
+## Setting the scene
+
+```{r load, message = FALSE}
+library(move2)
+library(dplyr)
+library(sf)
+library(move2utils)  # loaded here so that future helpers are visible
+
+fishers <- mt_read(mt_example())
+fishers <- fishers[!st_is_empty(fishers), ]
+
+leroy <- filter_track_data(fishers, .track_id = "M1")
+leroy <- slice(leroy,1:300)
+
+summary(mt_time_lags(leroy, units = "min"))
+```
+
+## Interpolation
+
+`mt_interpolate()` supports three use patterns.
+
+### A. Regular time cadence via an interval string
+
+```{r interp-interval}
+## one fix per five minutes, refusing to bridge gaps longer than 1 h
+leroy_5min <- mt_interpolate(
+  leroy,
+  time         = "5 mins",
+  max_time_lag = as.difftime(1, units = "hours")
+)
+nrow(leroy); nrow(leroy_5min)
+summary(mt_time_lags(leroy_5min, units = "min"))
+```
+
+The `"5 mins"` string is passed through `lubridate::floor_date()`, so
+you can use any interval format that accepts (`"30 secs"`, `"2 hours"`,
+`"1 day"`, ...). `max_time_lag` is the policy for gaps: any original
+lag longer than this cutoff is *not* bridged; the output track has a
+break there rather than a dense string of interpolated points
+across the gap.
+
+### B. Interpolate at a specific set of timestamps
+
+```{r interp-specific}
+t0 <- min(mt_time(leroy))
+target_t <- t0 + as.difftime(c(10, 20, 30, 60, 120), units = "mins")
+leroy_at <- mt_interpolate(leroy, time = target_t, omit = FALSE)
+## the new locations
+head(leroy_at[mt_time(leroy_at) %in% target_t, ])
+```
+
+Setting `omit = TRUE` returns only the requested timestamps and
+discards the originals.
+
+### C. Interpolate to where a line crosses the track
+
+Useful for finding when an animal crossed a boundary — a road, a
+home-range edge, a territory line.
+
+```{r interp-line, eval = FALSE}
+## example: bounding square line (plug in your own geometry in practice)
+line <- sf::st_sfc(
+  sf::st_linestring(cbind(c(-1, 1, 1, -1, -1), c(-1, -1, 1, 1, -1))),
+  crs = sf::st_crs(leroy)
+)
+crossings <- mt_interpolate(leroy, sf = line)
+```
+
+### Comparison with legacy `move::interpolateTime()`
+
+| move                                               | move2                                      |
+|----------------------------------------------------|--------------------------------------------|
+| `interpolateTime(x, time = 500)` (count)           | `mt_interpolate(x, time = seq(min(t), max(t), length.out = 500))` |
+| `interpolateTime(x, time = as.difftime(5, "mins"))`| `mt_interpolate(x, time = "5 mins", max_time_lag = ...)`          |
+| `interpolateTime(x, time = timestamp_vec)`         | `mt_interpolate(x, time = timestamp_vec)` |
+
+The explicit `max_time_lag` is slightly more disciplined than the
+legacy default — you decide what counts as "too long to interpolate"
+rather than letting the function silently fill every gap.
+
+## Time-thinning
+
+The question "give me ~one fix per 45 min" has two sensibly different
+answers. `move2::mt_filter_per_interval()` gives the **bucketed**
+answer: divide time into 45-minute windows (aligned to wall-clock
+intervals via `floor_date`), and pick one fix per window.
+
+```{r filter-per-interval}
+leroy_45 <- mt_filter_per_interval(leroy, unit = "45 min",
+                                    criterion = "first")
+nrow(leroy); nrow(leroy_45)
+summary(mt_time_lags(leroy_45, units = "min"))
+```
+
+The criterion can be `"first"`, `"last"`, or `"random"`. Because the
+buckets are aligned to the wall clock, the actual time lag between
+retained fixes is not guaranteed to equal 45 minutes; if the first
+observed fix of a window falls at 10:55 and the next at 11:00, both
+are kept (they belong to different hour windows but are only 5 minutes
+apart in time).
+
+### Tolerance-constrained thinning with `mt_thin_time()`
+
+`mt_filter_per_interval()` is fine for visualisation, quick-look
+downsampling, or feeding a method that is tolerant of irregular
+sampling.
+
+`mt_thin_time()` solves a stricter problem: find the largest subset
+of fixes such that **every successive retained pair is within
+`[interval - tolerance, interval + tolerance]`**. The answer is the
+longest path in a small DAG on sorted timestamps; it is computed with
+a linear-time dynamic-programming sweep rather than the memoised
+recursion of the legacy implementation, so it scales cleanly to
+\eqn{10^5}{1e5}+ fixes.
+
+```{r thin-time}
+thinned <- mt_thin_time(leroy,
+                         interval  = "30 min",
+                         tolerance = "5 min",
+                         remove    = TRUE)
+nrow(leroy); nrow(thinned)
+
+lags <- mt_time_lags(thinned, units = "min")
+summary(lags[!is.na(lags)])
+```
+
+The retained-lag distribution shows the two regimes the function
+produces by construction:
+
+- **Within-run lags** fall inside `[interval - tolerance,
+  interval + tolerance]` — these are the tolerance-admissible
+  transitions that the DP maximised.
+- **Between-run lags** exceed `interval + tolerance` — they are the
+  original gaps that were too long to bridge; the run-splitter pre-pass
+  decomposed the track at these gaps so that thinning never pretends
+  to bridge them.
+
+No retained lag is ever shorter than `interval - tolerance`; that is
+the hard contract the function enforces.
+
+Tie-breaking when several chains are equally long:
+
+- `criterion = "closest"` (default) — minimum summed deviation from
+  the target interval, preferring chains that hit the target most
+  evenly.
+- `criterion = "first"` — earliest-starting chain, matching the
+  legacy `"first"` behaviour.
+
+
+## Distance-thinning
+
+"Give me one fix every 300 metres of travel" is handled by
+`mt_thin_distance()`. It walks along the track, accumulating
+great-circle (lon/lat) or planar (projected) distance via
+`move2::mt_distance()`. Like the time case, the same question has two
+sensible answers, chosen with `method`.
+
+The default, `method = "step"`, is the greedy one: keep the first fix,
+then keep a fix each time the cumulative travel **since the last
+retained fix** reaches `distance`. Every retained pair is then at least
+`distance` of travel apart.
+
+```{r thin-distance}
+leroy_300m <- mt_thin_distance(leroy, distance = 300)
+nrow(leroy); sum(leroy_300m$thin_selected)
+
+## filtered output for downstream use
+leroy_300m_kept <- mt_thin_distance(leroy, distance = 300, remove = TRUE)
+```
+
+`method = "interval"` is the distance-space twin of `mt_thin_time()`:
+it finds the *largest* subset in which every successive retained pair
+falls within `[distance - tolerance, distance + tolerance]` of travel,
+using the same dynamic-programming sweep. Reach for it when you want a
+spacing band rather than a floor.
+
+```{r thin-distance-interval}
+leroy_300pm30 <- mt_thin_distance(leroy, distance = 300, tolerance = 30,
+                                  method = "interval", remove = TRUE)
+nrow(leroy_300pm30)
+```
+
+In both cases multi-track input is thinned per individual and the
+output is labelled in place with a `thin_selected` column (matching the
+`mt_thin_time()` convention). With `method = "step"` the first fix of
+each track is always retained; with `method = "interval"` the
+longest-chain selection may start later. `distance` can be a numeric
+metre count or a `units` object (`units::set_units(0.5, "km")`), so the
+call can read naturally.
+
+## Summary
+
+| Task | Function |
+|---|---|
+| Interpolate at regular intervals | `mt_interpolate(x, time = "5 mins", max_time_lag = ...)` |
+| Interpolate at specific timestamps | `mt_interpolate(x, time = t_vec)` |
+| Interpolate where a line crosses | `mt_interpolate(x, sf = line)` |
+| Time-thin (bucketed) | `mt_filter_per_interval(x, unit = "45 min", criterion = "first")` |
+| Time-thin (tolerance-constrained) | `mt_thin_time(x, interval, tolerance)` |
+| Distance-thin | `mt_thin_distance(x, distance)` |
+
+## Further reading
+
+- `?move2::mt_interpolate`, `?move2::mt_filter_per_interval`.

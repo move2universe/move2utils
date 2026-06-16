@@ -1,0 +1,205 @@
+---
+title: "Migratory satellite tracking: Leo the Turkey Vulture"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Migratory satellite tracking: Leo the Turkey Vulture}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 4,
+  message = TRUE
+)
+```
+
+This vignette cleans a real satellite track end to end: Leo, a migratory
+Turkey Vulture (*Cathartes aura*) followed from Canada to Venezuela. The
+data look nothing like high-frequency GPS. Fixes arrive about three times
+a day but very unevenly, the track spans a continent, and the step
+lengths swing enormously between migration and the long stationary spells
+on the wintering and breeding grounds. Those features are exactly what
+trips up a naive outlier check, so Leo is a good test of cleaning that
+respects how much time passed between locations.
+
+## Load data
+
+Leo's track (2007--2013) is bundled with the package. We drop empty
+geometries first, as always.
+
+```{r load, message = FALSE}
+library(move2)
+library(sf)
+library(move2utils)
+
+Leo <- mt_read(system.file("extdata", "Leo-65545.csv.gz",
+                           package = "move2utils"))
+Leo <- Leo[!st_is_empty(Leo), ]
+
+cat(nrow(Leo), "locations over",
+    round(as.numeric(diff(range(mt_time(Leo))), units = "days")),
+    "days\n")
+
+## time lag distribution
+tl <- as.numeric(diff(mt_time(Leo)), units = "hours")
+cat("Time lags: median", round(median(tl), 1), "h,",
+    "range", round(min(tl), 1), "--", round(max(tl), 1), "h\n")
+```
+
+The gaps between fixes run from about an hour to months (the tag off, or
+the bird sitting out the winter). With timing this irregular, the cleaner
+has to account for elapsed time, or it will mistake a long migratory leg
+for an error.
+
+## Why elapsed time matters
+
+If you ignore how much time passed between two locations, a 500 km
+migratory step looks impossibly far compared with a day of local
+foraging, and the unusual-movement check (`mt_flag_outliers()`) flags it.
+Turn on `time_normalize` and the same step becomes a moderate speed --- a
+vulture covering 500 km in three days is entirely normal. The comparison
+makes the point:
+
+```{r time-norm-comparison}
+r_tn  <- mt_flag_outliers(Leo, time_normalize = TRUE,  plot = FALSE)
+r_raw <- mt_flag_outliers(Leo, time_normalize = FALSE, plot = FALSE)
+
+cat("With elapsed-time normalisation:   ", sum(r_tn$is_outlier), "outliers\n")
+cat("Without elapsed-time normalisation:", sum(r_raw$is_outlier), "outliers\n")
+```
+
+Almost all of the extra "outliers" in the second run are false alarms:
+ordinary migratory movements that only look extreme because the raw step
+length ignores the days that elapsed. This is why `time_normalize = TRUE`
+is the sensible choice for irregular data.
+
+## Default detection
+
+```{r default, fig.width = 10, fig.height = 5}
+result <- mt_flag_outliers(Leo)
+```
+
+With elapsed-time normalisation and the default gap-based threshold,
+Leo's track shows very few or no outliers. A soaring bird tracked by
+satellite is naturally more variable than a mammal tracked by
+high-frequency GPS, and the gap threshold reads that wide spread as the
+normal distribution rather than chopping off its tails.
+
+## The one-call workflow --- `mt_clean_track()`
+
+For routine cleaning, `mt_clean_track()` runs all four checks --- path
+position (`mt_flag_outliers_bridge`), there-and-back spikes
+(`mt_flag_outliers_detour`), unusual movement (`mt_flag_outliers`), and
+speed (`mt_flag_speed_cap`) --- under one iterative call and combines them
+into a single decision. By default it weighs how strongly each check
+distrusts a location on a common scale and flags the location when the
+combined evidence is positive **and** either two checks agree or the
+there-and-back check alone is overwhelmingly sure (`consensus =
+"evidence_corroborated"`). You can switch rules via `consensus =`: the
+earlier behaviour is `"class_aware"`, and `"strict"`, `"majority"`,
+`"speed_trusted"`, `"weighted_evidence"`, `"any"` and `"custom"` are also
+available (see `?mt_flag_consensus`).
+
+Turkey vultures sustain flight speeds around 25 m/s. Supplying that as a
+physiological cap (`v_max = 25`) lets the speed check peel any spoof- or
+teleport-type clusters at their edges before the other checks run on what
+survives.
+
+```{r clean-track, fig.width = 10, fig.height = 5}
+clean <- mt_clean_track(Leo, v_max = 25, plot = FALSE)
+cat("kept", nrow(clean), "of", nrow(Leo), "fixes\n")
+```
+
+For long, irregular satellite tracks where you have no known top speed,
+leave the cap at its data-driven default (`v_max = NULL`) --- that is the
+safe call.
+
+Whichever consensus rule you use, `mt_clean_track()` still records *why*
+each location was flagged. The `error_class` column names the rule that
+caught it (a clear there-and-back spike, an impossible speed, membership
+of a removed block, and so on); it is computed regardless of the
+consensus rule. To see the full evidence weighed on a common scale ---
+the `combined_evidence` column --- run the standalone
+`mt_flag_consensus(mode = "evidence_corroborated")` or
+`mt_flag_consensus(mode = "weighted_evidence")` on a flagged track.
+
+## Auto-optimised alpha
+
+The unusual-movement check blends each step with the change in step from
+one move to the next; `alpha` sets how much that change counts. For Leo's
+irregular data, how much *should* it count? Let the optimiser decide:
+
+```{r auto-alpha}
+r_auto <- mt_flag_outliers(Leo, autodiff_alpha = "auto", plot = FALSE)
+cat("Outliers with auto-alpha:", sum(r_auto$is_outlier), "\n")
+```
+
+## Comparison with a regular-sampling track
+
+The contrast with regular, high-frequency sampling is instructive. The
+bundled `CPF_A` synthetic track (also used in vignettes 1, 3, 4 and 5)
+has regular sampling and 23 errors planted at known positions. There the
+check finds genuine errors that stand out clearly against an otherwise
+tight distribution:
+
+```{r regular-comparison}
+path <- system.file("extdata/synthetic_tracks.csv.gz",
+                    package = "move2utils")
+tracks <- mt_read(path)
+cpf_a  <- filter_track_data(tracks, .track_id = "CPF_A")
+
+r_cpf <- mt_flag_outliers(cpf_a, plot = FALSE)
+cat("CPF_A (regular sampling, 23 planted outliers):",
+    sum(r_cpf$is_outlier), "flagged of", nrow(cpf_a), "fixes\n")
+cat("Leo (vulture, satellite):",
+    sum(result$is_outlier), "flagged of", nrow(Leo), "fixes\n")
+```
+
+The check adapts to the data. Regular high-frequency sampling gives a
+tight distribution where planted errors jump out; irregular satellite
+data has wide natural variability that the gap threshold respects rather
+than punishes.
+
+## Multi-scale persistence annotation
+
+`mt_persistence_score()` takes any flagged output and adds a confidence
+score: at each of `scales = c(2, 4, 8)` (the validation scales) it asks
+whether a flagged location still looks anomalous when viewed over a wider
+time window. Scores run from 1 (flagged only at the native resolution) to
+4 (flagged at every scale). It does not touch `is_outlier` --- it only
+annotates.
+
+```{r persistence}
+annotated <- mt_persistence_score(result, silent = TRUE)
+flagged <- which(annotated$is_outlier)
+cat("Persistence score distribution among flagged fixes:\n")
+print(table(annotated$persistence_count[flagged]))
+```
+
+See `vignette("OUTLIER_5_persistence_score", package = "move2utils")` for
+the empirical class-conditional analysis on synthetic CPF data.
+
+## Further reading
+
+- `vignette("OUTLIER_1_getting_started", package = "move2utils")` — the
+  unified `mt_clean_track()` workflow and a brief tour of all four
+  checks.
+- `vignette("OUTLIER_2_diagnose_clean_track", package = "move2utils")` —
+  the after-cleaning health check.
+- `vignette("OUTLIER_3_state_conditional", package = "move2utils")` —
+  cleaning different behaviours separately, the recipe to reach for when
+  the diagnostic flags two behavioural states.
+- `vignette("OUTLIER_4_outlier_bridge", package = "move2utils")` — the
+  path-position check and the kinds of error its directional variant
+  distinguishes; for fine control over a single check.
+- `vignette("OUTLIER_5_persistence_score", package = "move2utils")` —
+  scoring how confident each flag is; useful as a post-cleaning filter.
+- `vignette("OUTLIER_heterogeneous_error_regimes", package = "move2utils")` —
+  tracks mixing sensors with different error, cleaned one sensor at a
+  time.
+- `vignette("OUTLIER_example_outlier_whitestork", package = "move2utils")` —
+  a full narrated cleaning on a real high-frequency stork track.

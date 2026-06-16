@@ -1,0 +1,246 @@
+---
+title: "State-conditional outlier cleaning"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{State-conditional outlier cleaning}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.width  = 9,
+  fig.height = 5,
+  message  = TRUE
+)
+```
+
+## When you need this
+
+`mt_clean_track()` runs four checks — path position
+(`mt_flag_outliers_bridge()`), there-and-back spikes
+(`mt_flag_outliers_detour()`), unusual movement
+(`mt_flag_outliers()`), and speed (`mt_flag_speed_cap()`). Each one
+compares every location against a single distribution: of bridge
+residuals, detour ratios, movement probabilities, or step speeds.
+
+That works when the animal moves in one consistent way. It breaks
+down when the animal has several behaviours with very different
+kinematics — resting at a perch, soaring, active flight, migration
+glides. Each behaviour adds its own peak to the distribution, and a
+single threshold then has to choose between two bad options:
+
+- cut between the peaks, which over-flags the smaller behaviour, or
+- cut beyond the largest peak, which misses the smaller behaviour's
+  own outliers.
+
+Neither is right. The fix is to *split the track by behaviour and
+clean each piece on its own*, so every check sees a single peak and
+can find the outlier tail relative to that one behaviour.
+
+## How to recognise the case
+
+`mt_diagnose_clean_track()` prints a clear note when this pattern is
+present:
+
+> Panel 1: 3 substantive modes detected at 0.01, 0.14, 6.91 m/s --
+> bimodal behaviour. The per-fix detectors threshold against a single
+> distribution; consider state-conditional analysis or filtering to
+> one mode before cleaning.
+
+Together with a flag rate that stays high over a contiguous stretch
+of time (Panel 2), this is the most common problem users hit on
+multi-behaviour species.
+
+## The `state =` parameter
+
+`mt_clean_track()` takes a `state =` argument. It splits each track
+into runs of constant state and runs the full pipeline separately on
+each run. The package treats your state labels as authoritative: how
+you decide the states (speed threshold, HMM, BCPA, manual
+annotation) is up to you, not the package.
+
+There are three accepted forms.
+
+1. **A column name on the move2 object**:
+
+   ```{r api-column, eval = FALSE}
+   x_clean <- mt_clean_track(x, v_max = 50, state = "behaviour")
+   ```
+
+2. **A per-fix vector** of length `nrow(x)`:
+
+   ```{r api-vector, eval = FALSE}
+   x_clean <- mt_clean_track(x, v_max = 50, state = my_state_vec)
+   ```
+
+3. **`NULL`** (default): one global distribution, the standard
+   behaviour.
+
+`NA` values in the state column or vector form their own state —
+runs of `NA` are cleaned in their own context. Runs shorter than 3
+fixes pass through unflagged, because the checks need at least 3
+points to compute a residual or auto-difference.
+
+## Where to get the state assignment from
+
+### From a column already on the move2
+
+The simplest case. If your data already carries a behavioural label
+(annotated by the field team, derived from accelerometer, imported
+from Movebank's annotation columns), pass the column name:
+
+```{r from-column, eval = FALSE}
+x_clean <- mt_clean_track(x, v_max = 50, state = "behaviour")
+```
+
+### From a speed threshold
+
+The cheapest do-it-yourself segmentation. Pick a valley between
+speed peaks (`mt_diagnose_clean_track()` shows you where they are),
+label each fix active or stationary, and pass the resulting vector:
+
+```{r from-speed, eval = FALSE}
+library(move2)
+
+## Per-fix step speed in m/s, via move2's helper.
+v <- as.numeric(suppressWarnings(mt_speed(x, units = "m/s")))
+
+## Smooth it so a single bad fix does not flip the label around it.
+v_smooth <- stats::filter(v, rep(1/9, 9), sides = 2, circular = FALSE)
+
+## Cut at a valley reported by mt_diagnose_clean_track() (~ 1 m/s for
+## stork-class species; species- and study-specific in practice).
+state <- ifelse(is.na(v_smooth) | v_smooth > 1,  "active", "stationary")
+
+x_clean <- mt_clean_track(x, v_max = 50, state = state)
+```
+
+### From an HMM (or BCPA, or any other principled segmenter)
+
+When you need a more rigorous split (e.g. soaring versus flapping
+flight, or three states), fit a Hidden Markov Model with `momentuHMM`
+or `moveHMM` and pass the decoded state sequence:
+
+```{r from-hmm, eval = FALSE}
+library(momentuHMM)
+
+prep   <- prepData(x, type = "UTM", coordNames = c("x", "y"))
+m_hmm  <- fitHMM(prep, nbStates = 3,
+                 stepPar0 = c(...), anglePar0 = c(...))
+state  <- viterbi(m_hmm)
+
+x_clean <- mt_clean_track(x, v_max = 50, state = state)
+```
+
+Whatever you pass is taken as final — the package's only job is to
+respect your split and clean each run.
+
+## A worked example with synthetic data
+
+We make up a two-state label on the package's `synthetic_tracks`
+fixture (CPF_A, the densely sampled track with 23 graded outliers)
+and check that `state =` returns the same number of rows and a
+sensible flag pattern.
+
+```{r worked, message = FALSE}
+library(move2)
+library(move2utils)
+
+m <- read.csv(gzfile(system.file("extdata",
+                                  "synthetic_tracks.csv.gz",
+                                  package = "move2utils")),
+              stringsAsFactors = FALSE)
+m$timestamp <- as.POSIXct(m$timestamp, tz = "UTC")
+mA <- mt_as_move2(m[m$individual.local.identifier == "CPF_A", ],
+                  coords = c("location.long", "location.lat"),
+                  time_column = "timestamp",
+                  track_id_column = "individual.local.identifier",
+                  crs = 4326)
+
+## Made-up two-state label: first half "rest", second half "flight".
+state <- c(rep("rest",   floor(nrow(mA) / 2)),
+           rep("flight", nrow(mA) - floor(nrow(mA) / 2)))
+
+out <- mt_clean_track(mA, v_max = 30, state = state,
+                       plot = FALSE, remove = FALSE, silent = TRUE)
+
+table(state, flagged = out$is_outlier)
+```
+
+Compare against the no-state baseline:
+
+```{r baseline, message = FALSE}
+out_pooled <- mt_clean_track(mA, v_max = 30,
+                              plot = FALSE, remove = FALSE, silent = TRUE)
+sum(out_pooled$is_outlier)
+sum(out$is_outlier)
+```
+
+On clean ground-truth data the two should be similar. On a real
+multi-behaviour track the split call usually catches outliers the
+pooled call misses (in the smaller behaviour's tail) and avoids
+over-flagging the body of the smaller behaviour.
+
+Both calls use the default flag rule (`consensus =
+"evidence_corroborated"`): each check's evidence is weighed on a
+common scale, and a location is flagged when the combined evidence is
+positive **and** either at least two checks agree or the there-and-back
+check alone is overwhelmingly sure. The `state =` split changes only
+*what each check sees*, not how the flags are combined. The
+`error_class` column, which names the rule behind each flag, is
+filled in regardless of the consensus rule. Other rules are available
+via `consensus =` — including the earlier `"class_aware"`, plus
+`"strict"`, `"majority"`, `"speed_trusted"`, `"weighted_evidence"`,
+`"any"` and `"custom"` (see `?mt_flag_consensus`).
+
+## Acknowledged limitations
+
+- **Segmentation is a research problem in itself.** A naive cut at a
+  density valley on log-speed can mislabel in-between states
+  ("soaring" versus "active flight" on a stork). HMM-based
+  segmentation with `momentuHMM` is more rigorous; manual annotation
+  is the gold standard.
+- **Endpoint effects.** Fixes near a state boundary are scored
+  against neighbours that may belong to the other state — the path
+  position check is especially sensitive to this. Smoothing the state
+  label (as in the speed-threshold recipe above) reduces it.
+- **Boundary outliers can slip through.** Block-shaped errors that
+  straddle a state boundary may be caught by neither segment. A final
+  whole-track pass with a hard `v_max` and `expand_blocks = TRUE`
+  (the default) is a reasonable belt-and-braces step:
+
+  ```{r belt, eval = FALSE}
+  out <- mt_clean_track(x, v_max = 50, state = state,
+                         expand_blocks = TRUE)
+  ## then a final whole-track sweep with state = NULL to catch
+  ## anything that straddles a boundary
+  out <- mt_clean_track(out, v_max = 50, expand_blocks = TRUE)
+  ```
+- **Multi-individual cohorts** work transparently — if the state
+  vector spans several track ids, each (track id × state run) becomes
+  its own segment. State labels need not be unique across
+  individuals.
+
+## Further reading
+
+- `vignette("OUTLIER_1_getting_started", package = "move2utils")` — the
+  unified `mt_clean_track()` workflow and a brief tour of all four
+  checks.
+- `vignette("OUTLIER_2_diagnose_clean_track", package = "move2utils")` — the
+  post-run health check.
+- `vignette("OUTLIER_4_outlier_bridge", package = "move2utils")` — the path
+  position check and the directional error-type classifier, for users
+  who want fine control over just one check.
+- `vignette("OUTLIER_5_persistence_score", package = "move2utils")` —
+  multi-scale scoring of how confident each flag is; useful as a
+  post-cleaning confidence filter.
+- `vignette("OUTLIER_heterogeneous_error_regimes", package = "move2utils")` —
+  tracks mixing sensors with different error, cleaned one sensor at a
+  time.
+- `vignette("OUTLIER_example_outlier_whitestork", package = "move2utils")` — a
+  full narrated cleaning pipeline on a real high-frequency stork track.
+- `vignette("OUTLIER_example_leo_migration", package = "move2utils")` —
+  outlier detection on irregular, large-scale satellite data.

@@ -1,0 +1,320 @@
+---
+title: "Heterogeneous error regimes: one sensor at a time"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Heterogeneous error regimes: one sensor at a time}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.width  = 9,
+  fig.height = 5,
+  message  = TRUE
+)
+```
+
+## What these checks assume
+
+All the cleaning in this package rests on one assumption: each fix is a
+noisy estimate of where the tracked device — and so the animal carrying
+it — actually was at that moment. Every check inside `mt_clean_track()`
+— path position (`mt_flag_outliers_bridge()`), there-and-back spikes
+(`mt_flag_outliers_detour()`), unusual movement (`mt_flag_outliers()`),
+and speed (`mt_flag_speed_cap()`) — reads neighbouring fixes as samples
+from one underlying path and asks which ones do not belong on it. This
+is the *Lagrangian* view: we follow the moving body.
+
+Some sensor streams report detections at fixed receivers rather than
+positions of the animal — Sigfox-geolocation, LoRa-network
+triangulation, VHF antenna scans, camera-trap captures, hydrophone
+events. Their raw output describes the receiving infrastructure, not the
+animal, so it breaks the assumption. This is the *Eulerian* view.
+Exclude these streams from cleaning; they belong in occupancy,
+detection-radius, or hidden-Markov models downstream.
+
+What matters is the *representation*, not the original sensor. If an
+Eulerian network has already been turned into a path — a trajectory
+reconstructed from a camera array with individual re-identification, or a
+chronological sequence of geolocated photographs of a known individual —
+that reconstructed path is exactly what these checks are built to clean.
+
+The rest of this vignette assumes Lagrangian data and covers one harder
+case: a single track that interleaves more than one Lagrangian sensor at
+very different precisions.
+
+## When you need this
+
+Modern deployments increasingly mix Lagrangian sensors at very different
+precisions within one track. A GPS + GLS deployment gives metre-scale
+fixes when the GPS gets a satellite lock and hundred-kilometre fixes from
+twilight estimates when it does not. An Argos-only deployment mixes
+`LC = 3` fixes (a few hundred metres of error) with `LC = B` fixes (no
+useful accuracy). GPS + Argos Doppler deployments span three orders of
+magnitude in nominal positional error from one fix to the next.
+
+Each check fits its threshold from the spread of the events it is handed.
+On a mixed track that spread has two (or more) humps, and any single
+threshold either lets the kilometre-scale events through (because it
+respects the broad tail) or rejects the metre-scale tail (because it sits
+inside the broad bulk). Neither is the answer you want.
+
+The fix is not another knob on `mt_clean_track()`. It is to **split the
+data by sensor before cleaning, clean each piece on its own terms, and
+re-merge if your analysis needs the combined path.** The rest of this
+vignette walks through that pattern.
+
+## How to recognise the case
+
+If the tag reports a `sensor_type_id` event column with more than one
+value, you have a mixed-regime track. The clearest sign is two very
+different orders of magnitude in nominal horizontal accuracy:
+
+```{r demo-detect, eval = FALSE}
+library(move2)
+library(dplyr)
+
+# `your_track` is the Movebank object you are inspecting.
+table(your_track$sensor_type_id)
+#>   <sensor_A>   <sensor_B>
+#>        69860        72949
+```
+
+Look up each sensor code in the Movebank attribute dictionary or your
+study metadata so you know what is what. Two Lagrangian sensors at very
+different precisions — GPS plus GLS, or GPS plus Argos Doppler — are the
+case this vignette addresses. A track that mixes a Lagrangian sensor with
+an Eulerian one (Sigfox-geolocation, LoRa, antenna detection) is **not**
+this case; exclude the Eulerian stream entirely (see the first section)
+before going on.
+
+Other signs of a mixed-regime track:
+
+- `argos_lc` taking values across `3, 2, 1, 0, A, B, Z` in the same
+  track.
+- `eobs_horizontal_accuracy_estimate` (or any per-fix accuracy column)
+  with a multi-humped distribution.
+- The same animal carrying two devices that report into the same
+  Movebank study with very different sampling cadence.
+
+## Why one call to `mt_clean_track()` does the wrong thing
+
+Hand a mixed-Lagrangian object straight to `mt_clean_track()` and every
+threshold — path position, unusual movement, there-and-back, and speed —
+sees a step-speed spread that mixes metre-scale steps from the precise
+stream with kilometre- or hundred-kilometre jumps from the coarse one.
+Whatever cap the auto-fitter picks sits either above the coarse bulk (so
+almost no coarse fix is flagged, even an obviously wrong one) or between
+the two bulks (so most coarse fixes are flagged, including the merely
+imprecise ones).
+
+Neither is a useful answer. `mt_diagnose_clean_track()` will usually show
+the multi-humped step-speed distribution plainly, and that is your cue to
+stop and pre-split.
+
+## The pre-split / re-merge pattern
+
+The split is mechanical: filter the move2 object on the per-fix sensor
+column, clean each subset with its own `mt_clean_track()` call, then join
+the per-event flags back onto the original object by `event_id`. Each
+subset is internally homogeneous, so each check's assumptions hold within
+the call.
+
+```{r split, eval = FALSE}
+library(move2utils)
+library(move2)
+library(dplyr)
+
+# 1. Split by sensor (event-level column).
+your_track_A <- your_track[your_track$sensor_type_id == "<sensor_A>", ]
+your_track_B <- your_track[your_track$sensor_type_id == "<sensor_B>", ]
+
+# 2. Clean each on its own.  Each call sees one error regime; the
+#    threshold checks fit a single, well-behaved distribution.
+#    See "Choosing the speed check" below for whether to pass
+#    mass+mode (or a hard v_max) to each call.
+clean_A <- mt_clean_track(your_track_A, plot = FALSE, remove = FALSE,
+                          silent = TRUE)
+clean_B <- mt_clean_track(your_track_B, plot = FALSE, remove = FALSE,
+                          silent = TRUE)
+
+# 3. Re-merge by joining the per-event flag back onto the original
+#    object using `event_id`.  The two sub-objects may share track
+#    IDs (e.g. when a single deployment had both sensors), so a
+#    naive rbind() of the move2 objects can error on duplicates.
+#    An event_id join is the safe pattern.
+flags <- rbind(
+  data.frame(event_id = clean_A$event_id, is_outlier = clean_A$is_outlier),
+  data.frame(event_id = clean_B$event_id, is_outlier = clean_B$is_outlier)
+)
+cleaned <- your_track
+cleaned$is_outlier <- flags$is_outlier[match(cleaned$event_id, flags$event_id)]
+```
+
+Points worth noting:
+
+- **Split on an event-level column.** Track-level columns (everything in
+  `mt_track_data()`) describe the whole deployment and cannot resolve a
+  within-track sensor mix. Use a column that varies per fix
+  (`sensor_type_id`, `argos_lc`, or one you derived from per-fix
+  accuracy).
+- **Each subset is a valid move2.** Subsetting with `[` keeps the move2
+  class, the time column, and the track-id column.
+- **Re-merge with an `event_id` join, not `rbind`.** When a single
+  deployment carried both sensors, the two subsets share track IDs and
+  `rbind()` refuses to combine them. Joining the flag back onto the
+  original `your_track` by `event_id` sidesteps this, and also carries
+  the flag onto events from any tracks you filtered out upstream (which
+  then hold `NA` for `is_outlier`).
+
+## Choosing the speed check for each sub-stream
+
+After the split, each sub-stream gets its own `mt_clean_track()` call.
+The biggest per-call decision is whether to give it a physiological speed
+cap — `mass + mode` for the allometric cap from `v_phys_estimate()`, or a
+hard `v_max =` in m/s — or to let the speed check's relative auto-cap
+work alone. The rule is mechanical once you state the comparison:
+
+> Compare the sensor's noise floor in step-speed units
+> (`positional_error / sampling_interval`) against the animal's
+> physiological top step speed. If the noise floor is *well below*
+> physiology, supply a physiological cap. If it is *at or above*
+> physiology, do not.
+
+Two worked cases:
+
+- **GPS, 10 m typical error, 10-minute sampling.** Noise floor
+  ≈ 10 m / 600 s ≈ 0.017 m/s, far below any terrestrial-mammal
+  maximum. A physiological cap (say 14 m/s for a ~700 kg running animal)
+  cleanly separates impossible steps from real movement, and the
+  block-detection step's absolute cap catches outliers the relative
+  auto-cap — fitted from the same distribution that holds the outliers —
+  might miss.
+- **GLS twilight, ~100 km typical error, daily fixes.** Noise floor
+  ≈ 100 km / 86400 s ≈ 1.2 m/s, already at or above the sustained speed
+  of most species the sensor is fitted to. A physiological cap here would
+  flag the bulk of the GLS data as "impossible" when those step speeds
+  are just normal sensor noise over slow daily displacement. The relative
+  auto-cap is the right tool: it fits the threshold from the sensor's own
+  step speeds, so it lands at the right scale for the actual noise.
+
+The same reasoning covers other sensor pairs:
+
+- **Argos LC 3** (~250 m) on a soaring raptor: noise floor is tiny next
+  to the raptor's sustained ground speed; a physiology cap is fine.
+- **Argos LC B** (km-scale, sometimes unbounded) on the same raptor: a
+  physiology cap over-flags; rely on the auto-cap.
+- **Argos Doppler shift** (~1 km typical error, hourly cadence):
+  borderline. Run `mt_diagnose_clean_track()` and look at the step-speed
+  distribution. If the bulk sits below your expected physiological max,
+  use the physiology. If it straddles or sits above, use the auto-cap.
+
+When in doubt, run both and compare. A physiology cap should only remove
+fixes above a defensible biological maximum; if it flags a large fraction
+of fixes, the cap is wrong for that sub-stream (or its error regime is
+more variable than you thought, in which case the auto-cap is the safe
+choice).
+
+## What if I have multi-individual mixed-sensor data?
+
+This is where nested `pool_by` comes in. Suppose 50 raptors are tagged,
+each tag reports both GPS and Argos Doppler fixes, and you want
+population-strength thresholds while keeping the flag union scoped to each
+individual. Split by sensor first, then clean each homogeneous subset
+with a two-element `pool_by`:
+
+```{r nested, eval = FALSE}
+# `your_track` is the multi-individual, mixed-sensor object you
+# downloaded from Movebank. Split it by sensor first:
+your_track_gps   <- your_track[your_track$sensor_type_id == "<gps_code>", ]
+your_track_argos <- your_track[your_track$sensor_type_id == "<argos_doppler_code>", ]
+
+# Each homogeneous sub-object is then cleaned with nested pool_by.
+# "study_id" supplies the fit distribution (all raptors contribute);
+# "individual_local_identifier" is the union scope (a flag added by
+# the pool is scoped to that animal's tracks only).
+clean_gps <- mt_clean_track(
+  your_track_gps,
+  pool_by = c("study_id", "individual_local_identifier"),
+  plot = FALSE, remove = FALSE
+)
+clean_argos <- mt_clean_track(
+  your_track_argos,
+  pool_by = c("study_id", "individual_local_identifier"),
+  plot = FALSE, remove = FALSE
+)
+```
+
+The two-element form has two roles. The outer column (`"study_id"`) says
+where the threshold-fitting distribution comes from — all raptors
+contribute. The inner column (`"individual_local_identifier"`) says how
+far a pooled flag reaches — only that animal's tracks. Two roles, two
+columns. (See `?mt_clean_track` for the full semantics.)
+
+A deeper hierarchy — species, population, individual, tag — is not
+supported. `pool_by` has exactly two roles; with more nesting levels you
+pick the pair that captures the claim you want to make (whose
+distribution do I trust; within which level should the flag union act). A
+third level would only pay off under hierarchical / partial-pooling
+threshold estimation, which the cascade does not do.
+
+## Edge cases
+
+**Time gaps introduced by splitting.** Filtering by sensor naturally
+opens longer time gaps in each subset (only that sensor's rows remain).
+The path-position check handles this — it is gap-aware by construction.
+So does the unusual-movement check, which normalises by time lag. The
+there-and-back check is time-insensitive and unaffected. The speed check
+sees the subset's own step speeds, which are still physically meaningful
+(steps within one sensor stream).
+
+**Sensors that share an error regime.** Two sensors with the same error
+regime (say two GPS manufacturers, each ~10 m accuracy) need no split:
+the mix is homogeneous in the only sense that matters here. Split when the
+underlying distribution is bimodal, not just when the column has two
+values.
+
+**A sensor whose error is encoded per-fix (e.g. Argos LC).** You can
+treat each LC class as its own stream and split four ways. More often,
+you supply the per-fix sigma directly through the path-position check's
+`location_error =` argument; it then inflates its tolerance for
+high-error fixes and you keep all classes in one call. Split by sensor
+when the error is *categorical* (which device produced this fix); use
+`location_error =` when the error is *quantitative* (this fix has this
+sigma).
+
+## Summary
+
+- `mt_clean_track()` assumes one error regime per call, and assumes that
+  error regime is Lagrangian.
+- Mixed-Lagrangian tracks should be **pre-split by sensor on an
+  event-level column**, cleaned independently, and re-merged via an
+  **`event_id` join** onto the original object.
+- For multi-individual datasets, nested `pool_by` after the split gives
+  cohort-strength threshold fitting with an individual-scoped flag union.
+- The two-level cap on `pool_by` is deliberate: it has two semantic
+  roles, not many.
+
+## Further reading
+
+- `vignette("OUTLIER_1_getting_started", package = "move2utils")` — the
+  unified `mt_clean_track()` workflow and a brief tour of all four
+  checks.
+- `vignette("OUTLIER_2_diagnose_clean_track", package = "move2utils")` — the
+  post-run health check.
+- `vignette("OUTLIER_3_state_conditional", package = "move2utils")` — when the
+  diagnostic flags bimodal behaviour, the recipe for cleaning each
+  behavioural state separately.
+- `vignette("OUTLIER_4_outlier_bridge", package = "move2utils")` — the
+  path-position check and the directional error-morphology classifier;
+  for users who want fine-grained control over just one check.
+- `vignette("OUTLIER_5_persistence_score", package = "move2utils")` —
+  multi-scale annotation that scores how confidently each flag is an
+  outlier; useful as a post-cleaning confidence filter.
+- `vignette("OUTLIER_example_outlier_whitestork", package = "move2utils")` — a full
+  narrated cleaning pipeline on a real high-frequency stork track.
+- `vignette("OUTLIER_example_leo_migration", package = "move2utils")` — outlier
+  detection on irregular, large-scale satellite data.

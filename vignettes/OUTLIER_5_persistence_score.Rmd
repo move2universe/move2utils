@@ -1,0 +1,271 @@
+---
+title: "Multi-scale persistence score for outlier flags"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Multi-scale persistence score for outlier flags}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.width  = 9,
+  fig.height = 5,
+  message  = TRUE
+)
+library(move2utils)
+library(move2)
+library(sf)
+```
+
+## What this vignette covers
+
+Once `mt_clean_track()` has flagged a fix, the natural next question
+is how confident you should be that the fix is really an error.
+`mt_persistence_score()` gives you a number for that. It re-checks
+each flagged fix at wider time gaps: if a fix looks wrong compared to
+its immediate neighbours, *and* still looks wrong compared to the
+fixes 2, 4, and 8 steps away, that is stronger evidence than a fix
+that only looks odd at the finest scale.
+
+The result is a per-fix confidence score from 1 to 4 (with the default
+settings). You decide whether to drop the low-confidence flags or keep
+them all. The function never changes `is_outlier` itself.
+
+It works on the output of any flagger in the package —
+`mt_clean_track()` (the full cleaner), `mt_flag_outliers_bridge()`
+(path position), `mt_flag_outliers_detour()` (there-and-back),
+`mt_flag_outliers()` (unusual movement), `mt_flag_speed_cap()`
+(speed), `mt_sequential_outliers()`, and `mt_combined_outliers()`. It
+does not care *how* a fix was flagged, only whether it still looks out
+of place when you compare across wider gaps.
+
+The worked examples below show that the score is most useful when you
+filter it according to the cleaner's `error_class` column, rather than
+applying one rule to every flag. We show what that looks like in
+practice.
+
+## How it works — the idea first
+
+For each flagged fix the function asks: if I compare this fix to the
+one 2 steps away instead of 1 step away — and again at 4 steps and 8
+steps — does it still look like an outlier?
+
+The "looks like an outlier" test at each scale uses the same kind of
+joint distribution that the per-fix checks use, just on windowed step
+lengths and turn angles instead of single-step ones. The reference at
+each scale is built from *every* interior fix of the track, not only
+the flagged ones, so each candidate is scored against the track's own
+geometry at that scale rather than against an outside assumption.
+
+A fix that trips only at the native single-step resolution gets score
+1. A fix that also trips at the 2-step, 4-step, and 8-step windows
+gets score 4. The higher the score, the more robust the anomaly: it
+survives looking at the track more coarsely.
+
+### The formal picture (for the curious)
+
+For each flagged fix $i$ and each validation scale $k \in
+\{2, 4, 8\}$ (the default), the function computes:
+
+- $\text{step}_k^\text{in}(i)$: distance from $x_{i-k}$ to $x_i$
+- $\text{step}_k^\text{out}(i)$: distance from $x_i$ to $x_{i+k}$
+- $\text{turn}_k(i)$: turn angle at $x_i$ between the two long arms
+
+The reference distribution at scale $k$ is built from the same
+quantities computed at *every* interior fix of the track (the
+candidate is not removed). A 2-D histogram of
+$(\log\text{step}_k, \text{turn}_k)$ gives the joint density; a
+gap-on-($-\log$ probability) threshold decides whether each candidate
+is flagged at scale $k$.
+
+The persistence score is
+
+$$
+p(i) = 1 + \sum_{k \in \text{scales}} \mathbb{1}\bigl[i \text{ flagged at scale } k\bigr],
+$$
+
+so $p(i) \in \{1, 2, 3, 4\}$ for the default `scales = c(2, 4, 8)`.
+
+#### Why no thinning?
+
+A natural-sounding alternative is multi-scale voting: thin the track
+at each scale, run a detector on each thinned subset, then count
+votes. That has a structural index-parity problem. A fix at original
+index 7, with `scales = c(1, 2, 4, 8)`, is in the thinned subset only
+at scale 1; it can vote at most once, no matter how anomalous it looks
+at the wider scales. The persistence score sidesteps this by
+evaluating *every* flagged fix at *every* validation scale.
+
+## Worked example
+
+Load the bundled synthetic data and pull out the spike-contaminated
+`CPF_A` track. We also read the ground truth, which records the index
+of each injected error.
+
+```{r cpf-data, message = FALSE}
+path   <- system.file("extdata/synthetic_tracks.csv.gz", package = "move2utils")
+tracks <- mt_read(path)
+cpf_a  <- filter_track_data(tracks, .track_id = "CPF_A")
+
+gt      <- readRDS(system.file("extdata", "synthetic_ground_truth.rds",
+                               package = "move2utils"))
+truth_a <- gt[["CPF_A"]]$index
+```
+
+Run the cleaner on `CPF_A` and annotate the result with the
+persistence score:
+
+```{r cascade-and-score}
+clean <- mt_clean_track(cpf_a, plot = FALSE, remove = FALSE)
+ann <- mt_persistence_score(clean, silent = TRUE)
+
+flagged <- which(ann$is_outlier)
+cat("Cleaner flagged:", length(flagged), "fixes\n")
+cat("Persistence score distribution:\n")
+print(table(ann$persistence_count[flagged]))
+```
+
+The printed distribution shows that most flags persist at the maximum
+score (`p = 4`), as expected for spike-class outliers whose anomaly
+survives every coarsening.
+
+## The class-conditional finding
+
+The empirical question is whether persistence usefully separates true
+positives from false positives within the cleaner's flag set. The
+answer depends on which `error_class` the cleaner assigned.
+
+`mt_clean_track()` attaches one of six error classes to each flag:
+`geometric_spike`, `consensus`, `state_anomaly`,
+`kinematic_confluence`, `block`, `physiological`. Each class records a
+different combination of the four checks that fired, and each has a
+different empirical relationship with persistence. The `error_class`
+column is computed the same way whatever consensus rule decided the
+flags, so the pattern below holds under the current default
+(`evidence_corroborated`) just as it did under the earlier
+`class_aware` rule.
+
+Pooling across all five CPF synthetic tracks (`CPF_A` through
+`CPF_F`), and asking, for each error class, what fraction of true
+positives versus false positives persist at $\geq 3$ scales:
+
+| `error_class` | $n$ TPs | $n$ FPs | % TPs at $p \geq 3$ | % FPs at $p \geq 3$ | TP$-$FP gap |
+|---|---|---|---|---|---|
+| `geometric_spike` | 76 | 0 | 51% | (no FPs) | (class-pure on synthetic) |
+| `state_anomaly` | 24 | 23 | 96% | 57% | **+39.3 pp** |
+| `consensus` | 34 | 9 | 82% | 44% | **+37.9 pp** |
+| `kinematic_confluence` | 7 | 7 | 71% | 86% | $-$14.3 pp (small $n$) |
+
+Three points:
+
+1. The `geometric_spike` class is **empirically pure on the
+   synthetic**: the cleaner produces no false positives here, so
+   persistence has nothing to filter.
+2. The `state_anomaly` and `consensus` classes show a clean
+   **+37–39 pp** gap: true positives persist far more often than false
+   positives. A persistence-based filter on these classes
+   substantively improves precision.
+3. The `kinematic_confluence` class rests on a small sample (7 TPs / 7
+   FPs, concentrated on the multi-state `CPF_F` track), and the signal
+   direction is uncertain.
+
+## Recommended usage pattern
+
+Use the helper as **annotation only** by default; never let it change
+`is_outlier` automatically. Where you do want to filter, gate the
+filter on `error_class` so it acts only where persistence is
+discriminative:
+
+```{r class-aware-filter}
+clean <- mt_clean_track(cpf_a, plot = FALSE, remove = FALSE)
+ann <- mt_persistence_score(clean, silent = TRUE)
+
+## Drop low-persistence flags only in the classes where persistence
+## is empirically discriminative.
+demote <- ann$is_outlier &
+            ann$error_class %in% c("state_anomaly", "consensus") &
+            ann$persistence_count < 3
+
+cat("Cleaner flags:           ", sum(ann$is_outlier), "\n")
+cat("Demoted by class filter: ", sum(demote), "\n")
+cat("Final flagged after filter:",
+    sum(ann$is_outlier & !demote), "\n")
+```
+
+## When not to apply the persistence filter
+
+The score loses its discriminative power in two cases:
+
+- **Halo-style outliers.** Repeated wandering returns to a fixed
+  location have anomalies that *average out* over wider windows, so
+  their persistence score is structurally low even when the fix is
+  genuinely an error. The cleaner usually files these as
+  `geometric_spike` (where the class is already pure and no filtering
+  is needed). But on a detector's raw output, which carries no
+  `error_class` column, applying a persistence filter to halo data
+  will preferentially remove true positives.
+
+- **Bridge or detour standalone output.** On raw path-position
+  (`mt_flag_outliers_bridge()`) or there-and-back
+  (`mt_flag_outliers_detour()`) flags, false positives *persist more*
+  than true positives, so a persistence filter would hurt precision
+  rather than help. Both checks flag on local-window geometry, so
+  their true positives include scale-dependent cases (halo), while
+  their false positives sit at structurally complex track regions
+  where any window-based score fires consistently.
+
+The safe pattern is therefore: **annotate, then filter by
+`error_class`**. Without an error-class column, treat the persistence
+score as a confidence column you inspect, not an automatic filter.
+
+## Custom scales
+
+The default `scales = c(2, 4, 8)` suits typical animal-tracking data.
+Adjust it if your sampling rate or contamination geometry warrants:
+
+```{r custom-scales, eval = FALSE}
+## Denser scale ladder for high-frequency GPS:
+ann <- mt_persistence_score(clean, scales = c(2L, 3L, 5L, 8L, 13L))
+
+## Coarser-only validation for sparse Argos data:
+ann <- mt_persistence_score(clean, scales = c(4L, 8L, 16L))
+```
+
+Each scale must be $\geq 2$; scale 1 is the original flagger's
+resolution and is already counted in the score's $+1$ constant.
+
+## Relationship to the retired `mt_flag_outliers_multiscale`
+
+`mt_persistence_score()` replaces the previous
+`mt_flag_outliers_multiscale()` (retired in v0.3). The predecessor
+thinned the track at multiple scales and voted; the new helper does
+not thin and instead computes a windowed view at every fix. This
+removes the index-parity bias of the old design and makes the score
+detector-agnostic. See the v0.3 NEWS entry for the empirical
+motivation behind the change.
+
+## Further reading
+
+- `vignette("OUTLIER_1_getting_started", package = "move2utils")` — the
+  unified `mt_clean_track()` workflow and a brief tour of all four
+  checks.
+- `vignette("OUTLIER_2_diagnose_clean_track", package = "move2utils")` — the
+  post-run health check.
+- `vignette("OUTLIER_3_state_conditional", package = "move2utils")` — when the
+  diagnostic flags two behaviours, the recipe for cleaning each
+  behavioural state separately.
+- `vignette("OUTLIER_4_outlier_bridge", package = "move2utils")` — the
+  path-position check and the directional error-morphology classifier,
+  for users who want fine-grained control over just one detector.
+- `vignette("OUTLIER_heterogeneous_error_regimes", package = "move2utils")` —
+  cleaning tracks that mix sensors with different error, one sensor at
+  a time.
+- `vignette("OUTLIER_example_outlier_whitestork", package = "move2utils")` — a
+  full narrated cleaning on a real high-frequency stork track.
+- `vignette("OUTLIER_example_leo_migration", package = "move2utils")` —
+  cleaning irregular, large-scale satellite data.
+</content>
+</invoke>

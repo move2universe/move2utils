@@ -1,0 +1,79 @@
+Package: move2utils
+Title: Utility Functions for Movement Data Based on move2
+Version: 0.4.3
+Authors@R: c(
+    person("Bart", "Kranstauber", role = "aut",
+           comment = "dBBMM/dBGB R interface and variance estimators"),
+    person("Finn", "Robertson", role = "ctb"),
+    person("Kamran", "Safi", email = "ksafi@ab.mpg.de", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-8418-6759")),
+    person("Anne K.", "Scharf", role = "aut",
+           comment = "dBBMM/dBGB R interface and variance estimators")
+    )
+Description: Utility functions for working with animal movement data stored
+    as 'move2' objects. Four outlier-detection primitives are provided,
+    composable individually or through a unified 'mt_clean_track()'
+    entry-point: (i) a geometric bridge-residual method that scores each
+    fix by its deviation from the time-weighted Brownian-bridge mean of
+    its temporal neighbours, leverage-immune by construction, with an
+    optional directional decomposition for error-morphology
+    classification; (ii) a path-vs-displacement detour ratio that scores
+    each fix by the dimensionless ratio of cumulative path length to
+    chord displacement over a sliding window, time-insensitive and
+    scale-invariant; (iii) a probabilistic method that scores each fix
+    from the empirical joint distribution of speed, angular velocity,
+    and their gap-aware auto-differences, with a non-parametric
+    gap-aware normalisation robust to irregular sampling; (iv) a
+    step-level speed cap with a dip-test-validated data-driven default
+    that catches the boundary transitions of coherent outlier blocks
+    that per-fix detectors structurally cannot resolve. State-aware
+    bridge variants ('mt_flag_outliers_dbgb()',
+    'mt_flag_outliers_dbbmm()') estimate per-axis bridge motion variance
+    and flag fixes via an envelope rule across three Z channels, useful
+    when behavioural states make a single global threshold over- or
+    under-flag.
+    The package also provides dynamic Brownian bridge movement models
+    (dBBMM) and dynamic bivariate Gaussian bridge (dBGB) variance
+    estimation and utilisation-distribution computation, migrated
+    from the 'move' package C kernels to a modern 'move2'/'sf'/'terra'
+    spatial stack.
+License: GPL (>= 3)
+URL: https://github.com/move2universe/move2utils,
+    https://gitlab.mpcdf.mpg.de/macroeco/move2utils_mee_note,
+    https://gitlab.mpcdf.mpg.de/macroeco/outlier_mee_paper
+BugReports: https://github.com/move2universe/move2utils/issues
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 4.5.0)
+Imports:
+    move2,
+    rlang,
+    sf,
+    terra,
+    units,
+    stats,
+    graphics,
+    grDevices
+Suggests:
+    testthat (>= 3.0.0),
+    diptest,
+    dplyr,
+    lwgeom,
+    circular,
+    geosphere,
+    emdist,
+    MASS,
+    lubridate,
+    knitr,
+    rmarkdown,
+    parallel,
+    rnaturalearth,
+    patchwork,
+    ggplot2,
+    matrixStats,
+    move,
+    raster
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

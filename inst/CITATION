@@ -1,0 +1,36 @@
+citHeader(
+  "To cite move2utils in publications, please cite the Application Note.",
+  "For the outlier-detection methodology specifically, also cite the",
+  "companion paper. Both are forthcoming on bioRxiv; DOIs will be added",
+  "here at deposition."
+)
+
+bibentry(
+  bibtype   = "Misc",
+  title     = "{move2utils}: a utility toolkit for the {move2} ecosystem",
+  author    = c(person("Bart", "Kranstauber"),
+                person("Kamran", "Safi"),
+                person("Anne K.", "Scharf")),
+  year      = "2026",
+  publisher = "bioRxiv",
+  note      = "bioRxiv preprint, in preparation",
+  textVersion = paste(
+    "Kranstauber B, Safi K, Scharf AK (2026).",
+    "move2utils: a utility toolkit for the move2 ecosystem.",
+    "bioRxiv (in preparation)."
+  )
+)
+
+bibentry(
+  bibtype   = "Misc",
+  title     = "Self-thresholding hierarchical outlier-detection for animal movement tracks",
+  author    = person("Kamran", "Safi"),
+  year      = "2026",
+  publisher = "bioRxiv",
+  note      = "bioRxiv preprint, in preparation",
+  textVersion = paste(
+    "Safi K (2026).",
+    "Self-thresholding hierarchical outlier-detection for animal movement tracks.",
+    "bioRxiv (in preparation)."
+  )
+)
