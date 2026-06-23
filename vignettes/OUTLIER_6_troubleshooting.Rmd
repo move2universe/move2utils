@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
   fig.height = 4,
   message = TRUE
 )
+library(move2utils)
 ```
 
 `mt_clean_track()` works well on most tracks, but no automatic cleaner is
@@ -94,13 +95,37 @@ entirely, not cleaned. See
 
 A run of fabricated locations (a GPS spoof, or a jamming burst) can be
 internally consistent — its individual steps are small — so the per-fix
-checks only see its edges. The block-removal step catches it, but only
-once it knows the animal's real top speed. Supply `v_max` and it will
-engage:
+checks only see its edges. Giving the cleaner the animal's real top
+speed, via `v_max` or `mass` + `mode`, hands it a firm connectivity
+ceiling so it can recover the whole block, not just the seam.
 
-```{r spoof, eval = FALSE}
-clean <- mt_clean_track(track, v_max = 30)
+The package ships a fully synthetic demonstration track that carries one
+of every gross-error class — including a coherent spoof block and a
+jamming burst — with a ground-truth `error_type` column you can score
+against:
+
+```{r spoof-setup}
+source(system.file("extdata", "make_demo_track.R", package = "move2utils"))
+track <- make_demo_track()
+## the same pre-processing as "It errored or crashed", below
+track <- track[!sf::st_is_empty(track), ]
+track <- move2::mt_filter_unique(track, criterion = "first")
 ```
+
+```{r spoof-clean}
+clean <- mt_clean_track(track, mass = 0.5, mode = "flying",
+                        remove = FALSE, silent = TRUE)
+
+## how much of each fabricated block was recovered?
+table(error_type = clean$error_type, flagged = clean$is_outlier)[
+  c("spoof", "jam"), ]
+```
+
+Both blocks are recovered almost in full. Supplying the cap is the
+robust choice for coherent blocks: when a block sits far enough off-route
+that only its boundary steps look fast, the cap is exactly the ceiling
+the block-removal step needs to isolate it — and supplying one can only
+help, never hurt, block recovery.
 
 ### A rare, modest spike on a slow-moving animal
 

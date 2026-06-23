@@ -1,3 +1,42 @@
+# move2utils 0.4.4 — block-expansion monotonicity fix
+
+`mt_clean_track()` block expansion is now consistent across the
+auto-cap and physiological-cap paths: **supplying a physiological cap
+(`v_max`, or `mass` + `mode`) no longer reduces recovery of a coherent
+boundary block.**
+
+**Bug.** A sustained, boundary-anchored spoof block (a run of
+internally-consistent erroneous fixes pinned off-route, so only the
+seam steps look fast) was recovered in full on the auto path but
+largely missed when a physiological cap was supplied. Two causes
+compounded: (1) supplying a cap disabled block expansion outright, and
+(2) the iterative speed-peel removed the block's seam fixes, which
+widened the time gap across the seam so the implied across-seam speed
+fell below the cap — the block then re-joined the main trajectory in
+the connectivity graph and no block remained to flag.
+
+**Fix.**
+
+- The component partition underlying block expansion
+  (`.compute_component_partition`) now uses original, un-diluted
+  timing: across a gap created by removed fixes, the connectivity lag
+  is capped at the track's median sampling interval, so a large
+  displacement across a removed span stays severable. Genuine
+  single-step gaps (including real missing-data gaps) are unaffected,
+  and isolated spikes still correctly re-join (their kept neighbours
+  are spatially close).
+- Block expansion is no longer skipped when a physiological cap was
+  supplied. Recovery is now monotone in user information: a supplied
+  cap — the connectivity ceiling block expansion needs — can only help.
+- A latent off-by-one in the partition (a phantom unit-size component)
+  is corrected.
+
+Behaviour is unchanged on clean tracks, on mid-track blocks (recovered
+by the per-fix layer, with the gate correctly declining), and on the
+golden-eagle K02 case (byte-identical). Regression-tested with the new
+`inst/extdata/make_boundary_spoof_demo.R` fixture.
+
+
 # move2utils 0.4.3 — mt_thin_distance overhaul
 
 `mt_thin_distance()` was reworked after a check found its behaviour

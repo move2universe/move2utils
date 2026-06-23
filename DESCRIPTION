@@ -1,6 +1,6 @@
 Package: move2utils
 Title: Utility Functions for Movement Data Based on move2
-Version: 0.4.3
+Version: 0.4.4
 Authors@R: c(
     person("Bart", "Kranstauber", role = "aut",
            comment = "dBBMM/dBGB R interface and variance estimators"),

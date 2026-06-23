@@ -66,3 +66,4 @@ benchmarks/c_port_vs_move/compare_stats.rds
 
 # Per-audit raw GPS caches: ship scripts + aggregate results, not the data
 audits/*/data/
+Rplots.pdf

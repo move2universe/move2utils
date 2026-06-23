@@ -451,6 +451,55 @@ test_that("pre_peel_aux = 'primitives' improves CPF_D F1 over symmetric default"
   expect_gt(f1(out_asy$is_outlier), f1(out_sym$is_outlier) + 0.06)
 })
 
+## ---- block-expansion monotonicity in user information --------------
+## Regression for the seam-dilution / `!used_peel` bug (2026-06-23):
+## supplying a physiological cap must NOT reduce recovery of a coherent
+## boundary block.  Before the fix the auto path recovered 150/150 (block
+## expansion) while `mass`/`mode` recovered 2/150 -- the peel removed the
+## seam, widened the gap, and the diluted across-seam speed fell below the
+## cap, so block expansion found nothing.  The fix computes the partition
+## on original (un-diluted) timing and drops the `!used_peel` short-circuit.
+## Fixture = sustained boundary-anchored spoof block
+## (inst/extdata/make_boundary_spoof_demo.R); this is the ONLY construction
+## that exercises graph block-expansion (CPF_D's mid-track block is
+## recovered by the per-fix layer, with the gate correctly declining).
+
+test_that("supplying a physiological cap does not reduce block recovery", {
+  src <- system.file("extdata", "make_boundary_spoof_demo.R",
+                     package = "move2utils")
+  if (nchar(src) == 0) src <- "inst/extdata/make_boundary_spoof_demo.R"
+  source(src, local = TRUE)
+  d <- make_boundary_spoof_demo()
+  nb <- length(d$truth)
+
+  o_auto <- suppressMessages(suppressWarnings(
+    mt_clean_track(d$track, plot = FALSE, remove = FALSE, silent = TRUE)))
+  o_cap  <- suppressMessages(suppressWarnings(
+    mt_clean_track(d$track, mass = 1, mode = "flying",
+                   plot = FALSE, remove = FALSE, silent = TRUE)))
+
+  rec_auto <- sum(o_auto$is_outlier[d$truth])
+  rec_cap  <- sum(o_cap$is_outlier[d$truth])
+
+  ## auto path recovers essentially the whole block via block-expansion
+  expect_gt(rec_auto, 0.9 * nb)
+  ## monotonicity: the cap path must do at least as well (was 2/nb)
+  expect_gte(rec_cap, rec_auto)
+  ## and it is genuinely block-expansion doing the work on the cap path
+  expect_gt(sum(!is.na(o_cap$block_id)), 0.9 * nb)
+})
+
+test_that("block expansion declines on a clean track under a physiological cap", {
+  ## The spike-fragmentation caveat: a clean trajectory under a cap must
+  ## not manufacture blocks (no minority component dominates).
+  m <- read_synthetic()
+  m_B <- m[move2::mt_track_id(m) == "CPF_B", ]
+  o <- suppressMessages(suppressWarnings(
+    mt_clean_track(m_B, mass = 1, mode = "flying",
+                   plot = FALSE, remove = FALSE, silent = TRUE)))
+  expect_identical(sum(!is.na(o$block_id)), 0L)
+})
+
 ## ---- persistence_filter = "class_aware" (R2 opt-in) ---------------
 ## Empirical anchor (CASCADE_AUDIT_2026-05-11.md Section 6.2 + the
 ## 2026-05-09 class-conditional finding, post-CRS-fix numbers):

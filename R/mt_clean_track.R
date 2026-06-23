@@ -1413,7 +1413,7 @@ mt_clean_track <- function(x,
   ## for the WH17 auto empirical case (9623 -> 6725 with the guard).
   block_v_max_floor <- 1.0
   block_gate <- NULL
-  if (expand_blocks && !used_peel && is.finite(v_max_effective) &&
+  if (expand_blocks && is.finite(v_max_effective) &&
         v_max_effective > block_v_max_floor && sum(is_outlier) > 0) {
     part       <- .compute_component_partition(x, is_outlier,
                                                 v_max = v_max_effective)
@@ -1434,8 +1434,8 @@ mt_clean_track <- function(x,
         flag_iteration[new_block_flags] <- effective_max_iter + 1L
       }
       block_id <- exp_result
-    } else {
-      say("    To force block expansion, supply a physiological cap via `v_max = ...` or `(mass, mode)`.")
+    } else if (is.null(v_max)) {
+      say("    The auto-cap did not yield a clean block partition; supply a physiological cap via `v_max = ...` or `(mass, mode)` for a firmer connectivity ceiling.")
     }
   }
 
@@ -1874,10 +1874,37 @@ mt_clean_track <- function(x,
   x_kept <- x[kept, ]
   step_m <- .step_lengths_fast(x_kept)
   dt_s   <- as.numeric(move2::mt_time_lags(x_kept, units = "secs"))
+  ## Original-timing guard (monotonicity fix).  The connectivity cut is
+  ## computed on the KEPT graph, so removing the seam fixes of a coherent
+  ## boundary block widens the kept-to-kept time gap and the implied
+  ## across-seam speed dilutes below v_max -- the block then re-joins the
+  ## main component and block expansion cannot isolate it.  This is the
+  ## mechanism by which supplying a physiological cap used to *reduce*
+  ## block recovery (the `!used_peel` short-circuit only hid it).  Where
+  ## flagged fixes were removed BETWEEN two kept fixes (diff(kept) > 1),
+  ## cap the lag at the track's median consecutive sampling interval so a
+  ## large displacement across a removed span stays severable.  Genuine
+  ## single-step gaps (diff == 1, including real missing-data gaps that
+  ## leave no removed fix) keep their true lag and are never over-cut --
+  ## an isolated spike's kept neighbours are spatially CLOSE, so even with
+  ## the cap their implied speed stays sub-v_max and they correctly
+  ## re-join.  See HEURISTICS.md "block-expansion removed-gap dt cap".
+  full_dt <- as.numeric(move2::mt_time_lags(x, units = "secs"))
+  med_int <- stats::median(full_dt[is.finite(full_dt) & full_dt > 0],
+                           na.rm = TRUE)
+  removed_between <- c(diff(kept) > 1L, FALSE)   # edge i = kept[i] -> kept[i+1]
+  if (is.finite(med_int) && any(removed_between)) {
+    dt_s[removed_between] <- pmin(dt_s[removed_between], med_int)
+  }
   speed  <- ifelse(is.finite(step_m) & is.finite(dt_s) & dt_s > 0,
                    step_m / dt_s, NA_real_)
   cut_here <- !is.finite(speed) | speed > v_max
-  comp_kept <- c(1L, 1L + cumsum(cut_here))
+  ## comp_kept[j] = component label of kept fix j.  cut_here has one entry
+  ## per kept fix; its last entry is the NA-speed trailing edge (no
+  ## successor), so trim the cumulative labelling back to length(kept) --
+  ## the previous `c(1L, 1L + cumsum(cut_here))` returned length(kept)+1,
+  ## leaving a phantom size-1 component that inflated the size table.
+  comp_kept <- c(1L, 1L + cumsum(cut_here))[seq_along(kept)]
   list(comp_kept = comp_kept,
        sizes     = as.integer(tabulate(comp_kept)),
        kept      = kept,

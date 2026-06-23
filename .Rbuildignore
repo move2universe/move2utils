@@ -29,4 +29,5 @@
 ^CASCADE_AUDIT_.*\.md$
 ^FUNCTION_REVIEW_.*\.md$
 ^FUTURE_IMPROVEMENTS\.md$
+^.*_HANDOVER\.md$
 ^tools$
