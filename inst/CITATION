@@ -1,8 +1,8 @@
 citHeader(
   "To cite move2utils in publications, please cite the Application Note.",
   "For the outlier-detection methodology specifically, also cite the",
-  "companion paper. Both are forthcoming on bioRxiv; DOIs will be added",
-  "here at deposition."
+  "companion paper (forthcoming on bioRxiv; its DOI will be added at",
+  "deposition)."
 )
 
 bibentry(
@@ -13,11 +13,13 @@ bibentry(
                 person("Anne K.", "Scharf")),
   year      = "2026",
   publisher = "bioRxiv",
-  note      = "bioRxiv preprint, in preparation",
+  doi       = "10.64898/2026.07.07.736908",
+  url       = "https://doi.org/10.64898/2026.07.07.736908",
+  note      = "bioRxiv preprint",
   textVersion = paste(
     "Kranstauber B, Safi K, Scharf AK (2026).",
     "move2utils: a utility toolkit for the move2 ecosystem.",
-    "bioRxiv (in preparation)."
+    "bioRxiv. doi:10.64898/2026.07.07.736908."
   )
 )
 

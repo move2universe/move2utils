@@ -204,9 +204,9 @@ The outlier-detection framework — four complementary primitives (geometric bri
 
 ## Citation
 
-If you use `move2utils`, please cite the Application Note; for the outlier-detection methodology specifically, also cite the companion paper. Both are forthcoming on bioRxiv (DOIs added at deposition), and `citation("move2utils")` returns them.
+If you use `move2utils`, please cite the Application Note; for the outlier-detection methodology specifically, also cite the companion paper (forthcoming on bioRxiv). `citation("move2utils")` returns both.
 
-> Kranstauber B, Safi K, Scharf AK (2026). *`move2utils`: a utility toolkit for the `move2` ecosystem.* bioRxiv (in preparation).
+> Kranstauber B, Safi K, Scharf AK (2026). *`move2utils`: a utility toolkit for the `move2` ecosystem.* bioRxiv. doi:[10.64898/2026.07.07.736908](https://doi.org/10.64898/2026.07.07.736908).
 
 > Safi K (2026). *Self-thresholding hierarchical outlier-detection for animal movement tracks.* bioRxiv (in preparation).
 
