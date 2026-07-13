@@ -655,6 +655,16 @@ mt_clean_track <- function(x,
                  class = "move2utils_input_not_move2")
   }
   .reject_empty_geometry(x, "mt_clean_track()")
+  ## Capture the caller's column set up front.  When `remove = TRUE` the
+  ## returned object is a *shrunk* track, so the annotation columns the
+  ## cascade adds (is_outlier, flagged_by_*, loglr_*, combined_evidence,
+  ## block_id, error_class, ...) no longer align to the original row
+  ## indices -- indexing them by a pre-removal position silently reads a
+  ## shifted fix.  We therefore strip them on the remove = TRUE path and
+  ## return only the caller's columns minus the flagged rows.  Flags are
+  ## available intact via `remove = FALSE`.  Captured before any dispatch
+  ## branch or the iteration loop touches `x`.
+  orig_cols         <- names(x)
   consensus         <- match.arg(consensus)
   if (consensus == "custom" && !is.function(consensus_custom)) {
     rlang::abort(paste0(
@@ -937,7 +947,7 @@ mt_clean_track <- function(x,
                 silent         = silent)
     }
     if (plot)   .plot_clean_track(out)
-    if (remove) out <- out[!out$is_outlier, ]
+    if (remove) out <- .strip_cascade_cols(out[!out$is_outlier, ], orig_cols)
     return(out)
   }
 
@@ -1592,12 +1602,22 @@ mt_clean_track <- function(x,
   }
 
   if (plot)   .plot_clean_track(x)
-  if (remove) x <- x[!x$is_outlier, ]
+  if (remove) x <- .strip_cascade_cols(x[!x$is_outlier, ], orig_cols)
   x
 }
 
 
 ## ---- helpers ----------------------------------------------------
+
+## On the `remove = TRUE` return, drop every column the cascade added
+## and hand back only the caller's original columns (geometry is sticky
+## in sf, so it survives the intersect regardless).  Keeps the cleaned
+## object free of row-misaligned flag columns.  See the `orig_cols`
+## capture in mt_clean_track().
+.strip_cascade_cols <- function(x, orig_cols) {
+  keep <- intersect(names(x), orig_cols)
+  x[, keep]
+}
 
 
 ## Build a per-fix auxiliary outlier score for asymmetric pre-peel.
@@ -2347,6 +2367,10 @@ mt_clean_track <- function(x,
                                 plot, remove, silent, compact) {
   say <- .say(silent)
 
+  ## Caller's columns, captured before flag columns are pre-allocated
+  ## below -- stripped on the remove = TRUE return (see .strip_cascade_cols
+  ## and the orig_cols note in mt_clean_track()).
+  orig_cols <- names(x)
   ids <- as.character(move2::mt_track_id(x))
   n   <- nrow(x)
 
@@ -2653,6 +2677,6 @@ mt_clean_track <- function(x,
   }
 
   if (plot)   .plot_clean_track(x)
-  if (remove) x <- x[!x$is_outlier, ]
+  if (remove) x <- .strip_cascade_cols(x[!x$is_outlier, ], orig_cols)
   x
 }

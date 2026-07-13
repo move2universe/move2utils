@@ -16,6 +16,7 @@
 ^resources$
 ^HEURISTICS\.md$
 ^HYGIENE_AUDIT_.*\.md$
+^RELEASING\.md$
 ^notes_for_lab_docs$
 ^vignettes/.*\.html$
 ^doc$

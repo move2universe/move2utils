@@ -795,6 +795,32 @@ test_that("primitive-knob overrides: bridge_method='directional' on CPF_A wins F
   expect_gte(f1, 0.97)
 })
 
+test_that("remove = TRUE returns only the caller's columns; remove = FALSE keeps flags", {
+  m   <- read_synthetic()
+  m_A <- m[move2::mt_track_id(m) == "CPF_A", ]
+  orig <- names(m_A)
+
+  clr <- suppressMessages(mt_clean_track(m_A, plot = FALSE, silent = TRUE))
+  clf <- suppressMessages(mt_clean_track(m_A, remove = FALSE, plot = FALSE,
+                                         silent = TRUE))
+
+  ## the fix: a removed-rows return must not carry cascade annotation
+  ## columns (they no longer align to original row indices -- see 0.4.5)
+  expect_identical(names(clr), orig)
+  for (col in c("is_outlier", "flagged_by_bridge", "flagged_by_prob",
+                "flagged_by_speed", "flagged_by_detour", "loglr_prob",
+                "combined_evidence", "block_id", "error_class")) {
+    expect_false(col %in% names(clr))
+  }
+
+  ## remove = FALSE still exposes the flags (diagnose path is unaffected)
+  expect_true(all(c("is_outlier", "flagged_by_bridge") %in% names(clf)))
+
+  ## detection is unchanged: the surviving rows are exactly the
+  ## non-flagged rows of the remove = FALSE object
+  expect_equal(nrow(clr), sum(!(clf$is_outlier %in% TRUE)))
+})
+
 test_that("combined_evidence is exposed under evidence modes only", {
   m   <- read_synthetic()
   m_A <- m[move2::mt_track_id(m) == "CPF_A", ]

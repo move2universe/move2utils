@@ -1,3 +1,23 @@
+# move2utils 0.4.5 — cleaned-track return no longer carries flag columns
+
+`mt_clean_track(x)` with the default `remove = TRUE` now returns **only
+the caller's original columns** (minus the flagged rows). The cascade's
+annotation columns (`is_outlier`, `flagged_by_*`, `loglr_*`,
+`combined_evidence`, `block_id`, `error_class`, `flag_iteration`) are no
+longer attached to the removed-rows return.
+
+**Why.** On a `remove = TRUE` return the object is *shrunk*, so those
+columns no longer align to the original row indices. Indexing them by a
+pre-removal position (e.g. a row number computed on the full input)
+silently reads a *different, shifted fix* — which reads as "the cascade
+missed an outlier it actually removed". Dropping the columns makes that
+misuse impossible instead of merely discouraged.
+
+**No behaviour change to detection.** Flags, consensus, and which rows
+are removed are all unchanged. To inspect flags, call with
+`remove = FALSE` (as `mt_diagnose_flags()` / `mt_diagnose_clean_track()`
+already require).
+
 # move2utils 0.4.4 — block-expansion monotonicity fix
 
 `mt_clean_track()` block expansion is now consistent across the

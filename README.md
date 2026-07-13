@@ -1,7 +1,7 @@
 # move2utils
 
 <!-- badges: start -->
-[![version](https://img.shields.io/badge/version-0.4.4-blue.svg)](NEWS.md)
+[![version](https://img.shields.io/badge/version-0.4.5-blue.svg)](NEWS.md)
 [![pipeline status](https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils/badges/main/pipeline.svg)](https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils/-/pipelines)
 [![License: GPL (>= 3)](https://img.shields.io/badge/license-GPL%20(%3E%3D%203)-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![R >= 4.5.0](https://img.shields.io/badge/R-%3E%3D%204.5.0-blue.svg)](https://www.r-project.org/)
