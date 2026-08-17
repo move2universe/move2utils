@@ -206,10 +206,13 @@ i.e. overwhelming within its own distribution.  This keeps the
 lone-strong-detector catches (e.g. a conspicuous out-and-back that
 only the detour detector sees) while requiring corroboration for
 detectors that over-react to legitimate sharp turns or
-behavioural-state changes (bridge, prob).  Empirically the best
-decision rule (benchmark 2026-06-07: highest F1 at canonical
-false-positive level, recall 1.0 on spoofing/jamming).  Matches the
-\code{\link{mt_clean_track}} cascade default.}
+behavioural-state changes (bridge, prob).  It is the default on
+principled grounds -- unsupervised, exposes the graded
+\code{combined_evidence} behind each call, and extends to new
+detectors -- and on current evidence is not more accurate than
+\code{"class_aware"}: the two differ by less than the
+realisation noise, which is not a demonstrated equivalence.
+Matches the \code{\link{mt_clean_track}} cascade default.}
 \item{\code{"weighted_evidence"}}{Evidence accumulation. Each
 detector supplies a signed log-likelihood-ratio (via
 \code{evidence_cols}, e.g. the \code{loglr_*} columns the four

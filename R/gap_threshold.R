@@ -22,9 +22,14 @@
 #'   higher values are more conservative.
 #' @param search_frac Fraction of the sorted values from the lower tail
 #'   to consider as candidate break locations.  Default \code{1/7} is
-#'   HEURISTIC (~14\% of the sorted values, the conventional "search the
-#'   lowest sextile to find the outlier-tail break"). Plausible range:
-#'   1/10 to 1/5.
+#'   HEURISTIC: search roughly the lowest seventh (~14\%) of the sorted
+#'   values for the outlier-tail break.  (This was described as "the
+#'   lowest sextile" until 2026-08-17; a sextile is 1/6 ~ 16.7\%, so the
+#'   name did not match the value.  The value is unchanged.)  Plausible
+#'   range: 1/10 to 1/5.  Note the value is effectively \strong{quantised}:
+#'   the implementation uses \code{round(1 / search_frac)} as an integer
+#'   denominator, so only 1/k for integer k is reachable and e.g.
+#'   \code{0.15} and \code{1/7} are the same input.
 #'
 #' @return A list with:
 #'   \describe{

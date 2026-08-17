@@ -49,7 +49,9 @@ cap in m/s.  If \code{NULL} (default), the speed detector runs
 in \code{"auto"} mode (dip-test-validated data-driven threshold)
 on every iteration.  Supply a positive scalar for a hard cap
 override.  Mutually exclusive with the \code{(mass, mode)}
-allometric route below.}
+allometric route below.  Supplying a cap by either route also
+affects runtime on contaminated tracks; see the \strong{Runtime}
+section.}
 
 \item{mass, mode}{Optional pair.  When both are supplied (and
 \code{v_max} is \code{NULL}), the function derives a principled
@@ -110,10 +112,18 @@ commensurable and summed into one calibrated evidence score, and a
 fix is flagged when that evidence is positive AND it is either
 corroborated (at least two detectors agree) or one detector is
 overwhelming (its evidence is saturated -- far beyond its own
-distribution).  This is the empirically validated default
-(benchmark 2026-06-07: best F1 at canonical false-positive level,
-keeps the conspicuous-excursion catches on slow-species data, and
-recall 1.0 on spoofing/jamming).  Alternatives:
+distribution).  It is chosen as the default on principled rather
+than performance grounds: it is unsupervised, it exposes the
+graded \code{combined_evidence} score behind every decision, and
+it extends to new detectors without new rules.  It is \emph{not},
+on current evidence, a more accurate rule than
+\code{"class_aware"}: under controlled-excursion injection into
+real GPS tracks the two differ by less than the realisation
+noise, which is an absence of evidence for a difference rather
+than a demonstration that none exists -- no equivalence margin
+was set and no equivalence test was performed.  An earlier
+apparent F1 advantage was an artefact of scoring both rules at
+one shared speed cap.  Alternatives:
 \code{"class_aware"} (the previous Boolean class-rule default, still
 available), \code{"weighted_evidence"} (net evidence \eqn{> 0}
 without the corroboration safeguard), \code{"strict"},
@@ -571,6 +581,48 @@ primitives remain exported for users who want to inspect which
 score caught what.  \code{mt_clean_track()} is the convenient
 one-call entrypoint.
 }
+\section{Runtime}{
+
+Runtime is governed by the number of iterations rather than by track
+length.  Each iteration re-scores every fix still standing, so cost is
+approximately (iterations x surviving fixes).  The iteration count is
+driven by contamination: each pass removes the fixes the cascade is
+confident about, which sharpens the track's own distributions and
+exposes the next layer.  A clean track converges in one or two passes
+at any size measured here; a heavily contaminated one may take dozens.
+
+Measured on a golden-eagle track of 855,712 fixes (after hygiene),
+carrying a coherent GPS-spoof block:
+
+\tabular{lrr}{
+  \strong{Input} \tab \strong{Fixes} \tab \strong{Time} \cr
+  clean prefix of the same track      \tab  40,000 \tab   0.4 s \cr
+  clean prefix of the same track      \tab  80,000 \tab   0.9 s \cr
+  full track, auto cap                \tab 855,712 \tab 622 s \cr
+  full track, \code{mass} / \code{mode} \tab 855,712 \tab  17 s
+}
+
+Supplying a physiological cap shortens the discovery loop: the pre-peel
+(see \code{\link{mt_peel_speed}}) removes physiologically impossible
+fixes in one convergent pass before the detectors run, so the iteration
+loop begins on a cleaner track.
+
+The two routes give different results, not the same result at different
+speeds.  On the track above, the capped run flagged 1,214 fixes (1,211
+of them classified \code{physiological}) against 877 for the auto
+route, distributed across the \code{consensus}, \code{geometric_spike}
+and \code{state_anomaly} classes.  The choice between them is
+methodological: compare the sensor's positional error over the sampling
+interval with the species' physiological maximum, and supply a cap
+where the implied error speed sits well below that maximum.  The
+runtime difference follows from that choice rather than motivating it.
+
+Where the auto route is the appropriate one, \code{max_iterations}
+bounds the worst case (the cascade warns if it stops without
+converging), and \code{compact = TRUE} keeps narration from scaling
+with cohort size on multi-individual studies.
+}
+
 \section{Primitive-knob overrides}{
 
 The cascade's primitive calls have empirically-tuned defaults

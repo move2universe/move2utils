@@ -31,4 +31,7 @@
 ^FUNCTION_REVIEW_.*\.md$
 ^FUTURE_IMPROVEMENTS\.md$
 ^.*_HANDOVER\.md$
+^REPLY_.*\.md$
 ^tools$
+^memory$
+^MANIFEST\.md$

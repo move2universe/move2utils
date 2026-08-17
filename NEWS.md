@@ -186,11 +186,15 @@ evidence-accumulation rule instead of the previous Boolean class-rule
 and a fix is flagged when that evidence is positive **and** either at
 least two detectors corroborate, or the high-specificity detour detector
 is overwhelming (saturated). It is data-driven, principled, and
-unsupervised — no user input or labels. On benchmarks it gives the best
-separation at the previous default's false-positive level, recovers the
-rare conspicuous excursions on slow-moving species that the conjunction
-rule missed, and still removes spoofing/GPS-jamming blocks at full
-recall. The previous behaviour is available with
+unsupervised — no user input or labels. On current evidence it is not more
+accurate than the previous `class_aware` rule — the two differ by less than
+the realisation noise, which is an absence of evidence for a difference
+rather than a demonstration of equivalence — so the default changed on
+principled grounds rather than on measured skill. Coherent
+spoofing/GPS-jamming blocks are still removed at full recall; which layer
+removes them depends on where the block sits — the per-fix detectors and the
+consensus rule for a mid-track block, graph-based block expansion for a
+boundary-anchored one. The previous behaviour is available with
 `consensus = "class_aware"`. The smooth `combined_evidence` column
 doubles as an optional one-lever sensitivity control. See
 `?mt_clean_track`, `?mt_flag_consensus`, and

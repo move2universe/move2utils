@@ -74,7 +74,9 @@
 #'   in \code{"auto"} mode (dip-test-validated data-driven threshold)
 #'   on every iteration.  Supply a positive scalar for a hard cap
 #'   override.  Mutually exclusive with the \code{(mass, mode)}
-#'   allometric route below.
+#'   allometric route below.  Supplying a cap by either route also
+#'   affects runtime on contaminated tracks; see the \strong{Runtime}
+#'   section.
 #' @param mass,mode Optional pair.  When both are supplied (and
 #'   \code{v_max} is \code{NULL}), the function derives a principled
 #'   physiological cap from species body mass and locomotor mode via
@@ -132,10 +134,18 @@
 #'   fix is flagged when that evidence is positive AND it is either
 #'   corroborated (at least two detectors agree) or one detector is
 #'   overwhelming (its evidence is saturated -- far beyond its own
-#'   distribution).  This is the empirically validated default
-#'   (benchmark 2026-06-07: best F1 at canonical false-positive level,
-#'   keeps the conspicuous-excursion catches on slow-species data, and
-#'   recall 1.0 on spoofing/jamming).  Alternatives:
+#'   distribution).  It is chosen as the default on principled rather
+#'   than performance grounds: it is unsupervised, it exposes the
+#'   graded \code{combined_evidence} score behind every decision, and
+#'   it extends to new detectors without new rules.  It is \emph{not},
+#'   on current evidence, a more accurate rule than
+#'   \code{"class_aware"}: under controlled-excursion injection into
+#'   real GPS tracks the two differ by less than the realisation
+#'   noise, which is an absence of evidence for a difference rather
+#'   than a demonstration that none exists -- no equivalence margin
+#'   was set and no equivalence test was performed.  An earlier
+#'   apparent F1 advantage was an artefact of scoring both rules at
+#'   one shared speed cap.  Alternatives:
 #'   \code{"class_aware"} (the previous Boolean class-rule default, still
 #'   available), \code{"weighted_evidence"} (net evidence \eqn{> 0}
 #'   without the corroboration safeguard), \code{"strict"},
@@ -420,6 +430,47 @@
 #'   linearly with the cohort size.  Ignored when
 #'   \code{silent = TRUE}.
 #'
+#' @section Runtime:
+#'
+#' Runtime is governed by the number of iterations rather than by track
+#' length.  Each iteration re-scores every fix still standing, so cost is
+#' approximately (iterations x surviving fixes).  The iteration count is
+#' driven by contamination: each pass removes the fixes the cascade is
+#' confident about, which sharpens the track's own distributions and
+#' exposes the next layer.  A clean track converges in one or two passes
+#' at any size measured here; a heavily contaminated one may take dozens.
+#'
+#' Measured on a golden-eagle track of 855,712 fixes (after hygiene),
+#' carrying a coherent GPS-spoof block:
+#'
+#' \tabular{lrr}{
+#'   \strong{Input} \tab \strong{Fixes} \tab \strong{Time} \cr
+#'   clean prefix of the same track      \tab  40,000 \tab   0.4 s \cr
+#'   clean prefix of the same track      \tab  80,000 \tab   0.9 s \cr
+#'   full track, auto cap                \tab 855,712 \tab 622 s \cr
+#'   full track, \code{mass} / \code{mode} \tab 855,712 \tab  17 s
+#' }
+#'
+#' Supplying a physiological cap shortens the discovery loop: the pre-peel
+#' (see \code{\link{mt_peel_speed}}) removes physiologically impossible
+#' fixes in one convergent pass before the detectors run, so the iteration
+#' loop begins on a cleaner track.
+#'
+#' The two routes give different results, not the same result at different
+#' speeds.  On the track above, the capped run flagged 1,214 fixes (1,211
+#' of them classified \code{physiological}) against 877 for the auto
+#' route, distributed across the \code{consensus}, \code{geometric_spike}
+#' and \code{state_anomaly} classes.  The choice between them is
+#' methodological: compare the sensor's positional error over the sampling
+#' interval with the species' physiological maximum, and supply a cap
+#' where the implied error speed sits well below that maximum.  The
+#' runtime difference follows from that choice rather than motivating it.
+#'
+#' Where the auto route is the appropriate one, \code{max_iterations}
+#' bounds the worst case (the cascade warns if it stops without
+#' converging), and \code{compact = TRUE} keeps narration from scaling
+#' with cohort size on multi-individual studies.
+#'
 #' @section Primitive-knob overrides:
 #' The cascade's primitive calls have empirically-tuned defaults
 #' that are exposed for fine-tuning at the orchestrator level
@@ -441,13 +492,23 @@
 #'     Detour's leg gate (\code{min_leg > 0}) is a standalone-use
 #'     gating mechanism that prevents the detour ratio from firing
 #'     on small-displacement noise wiggles.  Inside the cascade,
-#'     the conjunction rule plays the same gating role: detour
-#'     contributes to flags only when it agrees with another
-#'     detector under the class-aware rule.  Exposing
+#'     the agreement rule was intended to play the same gating role.
+#'     \strong{Note the scope of that argument.}  Under
+#'     \code{consensus = "class_aware"} it holds exactly -- every
+#'     class-aware clause requires at least two detectors, so detour
+#'     never flags alone.  Under the current default
+#'     \code{"evidence_corroborated"} it does \emph{not} hold for
+#'     detour specifically: detour is the designated
+#'     \code{solo_cols} detector and may flag alone when its
+#'     evidence is saturated, so on that path a fix can be flagged
+#'     with neither corroboration nor a leg gate.  That is the
+#'     intended solo exception (an out-and-back is high-specificity),
+#'     but it means \code{min_leg = 0} is not backed by the
+#'     conjunction on the default path.  Exposing
 #'     \code{min_leg} on the cascade would create two competing
 #'     gates running in parallel, with documented failure modes
 #'     where a fix is gated out by \code{min_leg} despite
-#'     satisfying the conjunction.  Users who specifically want
+#'     satisfying the agreement rule.  Users who specifically want
 #'     standalone leg-gated detour should call
 #'     \code{\link{mt_flag_outliers_detour}} directly.
 #'   \item \strong{speed_cap \code{threshold_type}} is hardcoded
@@ -1260,8 +1321,13 @@ mt_clean_track <- function(x,
 
     ## --- per-iteration flag rule -------------------------------------
     ## Delegate to the consensus core.  `consensus` defaults to
-    ## "class_aware"; other modes (strict / majority / speed_trusted /
-    ## any / custom) are exposed via the consensus parameter for users
+    ## "evidence_corroborated" -- it is the first element of the formal,
+    ## so that is what match.arg() selects.  "class_aware" was the
+    ## default BEFORE v0.4.0 and this comment said so until 2026-08-17;
+    ## anything reasoning about the default path must read the evidence
+    ## branch below, not the Boolean one.  The other modes (strict /
+    ## majority / speed_trusted / any / custom) are exposed via the
+    ## consensus parameter for users
     ## who want a conservative-vs-liberal knob or fully bespoke voting.
     ## See mt_flag_consensus() for the full specification of each mode.
     ## Evidence-based modes share one computation of the per-detector
@@ -1383,18 +1449,30 @@ mt_clean_track <- function(x,
   }
 
   ## ---- block expansion -------------------------------------------
-  ## Skip when pre-peel was used: the peel's iterative nature already
-  ## walks into multi-fix clusters via boundary propagation, so
-  ## expansion at the same v_max would cascade.  This is a structural
-  ## argument, not a tuning choice -- pre-peel and block expansion both
-  ## use v_max to define boundary edges, so running them in sequence on
-  ## the same partition would double-cascade flag propagation.
-  ## Empirical status (Item H, 2026-05-12, per-deployment probe at
-  ## `audits/2026-05-11-cascade-orchestrator/scripts/27c_per_track_lift.R`):
-  ## across CPF + cohort + K02 the counterfactual lift adds 0 flags on
-  ## every (track, cap-mode) pair.  The exclusion is structurally
-  ## defensible; no test-set evidence currently distinguishes it from
-  ## the lifted variant.  (Round-4 #C4's +1206-flag finding on Rhino
+  ## HISTORICAL NOTE, KEPT AS A WARNING.  This block used to be skipped
+  ## whenever the pre-peel had run (`!used_peel`), on the argument that
+  ## the peel already walks into multi-fix clusters via boundary
+  ## propagation, so expansion at the same v_max would double-cascade.
+  ## That argument was stated here as "structural, not a tuning choice",
+  ## and it was WRONG.  The `!used_peel` clause was REVERSED in v0.4.4
+  ## and MUST NOT be reinstated: the peel removes a coherent block's
+  ## SEAM fixes, which widens the kept-to-kept time gap so the implied
+  ## across-seam speed dilutes below v_max, the block re-joins the main
+  ## component, and expansion finds nothing.  Supplying a physiological
+  ## cap therefore REDUCED block recovery (auto 150/150 vs cap 2/150 on
+  ## `inst/extdata/make_boundary_spoof_demo.R`) -- a monotonicity
+  ## violation in user information.  The fix is the original-timing
+  ## guard in .compute_component_partition plus dropping this clause;
+  ## both halves are required.  See BLOCK_EXPANSION_USED_PEEL_HANDOVER.md.
+  ##
+  ## The old empirical support (Item H, 2026-05-12, per-deployment probe
+  ## at `audits/2026-05-11-cascade-orchestrator/scripts/27c_per_track_lift.R`,
+  ## "0 lift on every (track, cap-mode) pair") did not test the case that
+  ## breaks it: block expansion was dormant on that cohort for unrelated
+  ## reasons (auto-cap -> Inf; CPF_D's block is mid-track, where the
+  ## dominance gate correctly declines), so the probe never exercised a
+  ## boundary-anchored block under a finite cap.  A "0 lift" result from
+  ## a probe that cannot reach the mechanism is not evidence about it.  (Round-4 #C4's +1206-flag finding on Rhino
   ## was a probe artifact: the gate was run on the FULL multi-
   ## deployment object, cutting at the track-id boundary; the real
   ## cascade dispatches per-track at line 553 and never sees that cut.

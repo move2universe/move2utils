@@ -720,6 +720,18 @@ mt_flag_outliers <- function(x, threshold = NULL, prob_type = "joint",
   ga_step <- .gap_aware_autodiff(ref_deltaStep, ref_delta_gaps)
   ga_turn <- .gap_aware_autodiff(ref_deltaTurn, ref_delta_gaps)
 
+  ## Surface whether the gap-aware auto-difference is actually in force.
+  ## When it falls back to a constant scale the numerics stay valid but
+  ## the detector is no longer gap-aware, and nothing downstream can tell.
+  for (nm in c(step = "step", turn = "turning-angle")) {
+    ga <- if (nm == "step") ga_step else ga_turn
+    if (isFALSE(ga$gap_dependent)) {
+      say(sprintf(
+        "Note: gap-aware scaling is NOT in force for the %s auto-difference (%s);\n  the scale is constant, so autodifferences are not gap-normalised.",
+        nm, ga$gap_reason))
+    }
+  }
+
   if (method == "histogram") {
     if (step_transform == "none") {
       valid_step <- ref_step[!is.na(ref_step) & ref_step > 0]
@@ -1101,10 +1113,20 @@ mt_flag_outliers <- function(x, threshold = NULL, prob_type = "joint",
 #'   per-bin sample size.  Plausible range: 5--15.  The function
 #'   additionally clamps n_bins so each bin holds at least ~5
 #'   fixes, with a minimum of 2 bins.
-#' @return A list with two elements:
+#' @return A list with four elements:
 #'   \item{scale_fun}{A function mapping gap → expected scale (MAD).}
 #'   \item{kde_fun}{A KDE function on the gap-normalised deltas
 #'     (delta / scale).  Returns density in the normalised space.}
+#'   \item{gap_dependent}{Logical.  \code{TRUE} when the returned
+#'     \code{scale_fun} actually varies with the gap; \code{FALSE} when
+#'     the estimator fell back to a constant scale.  The fallback is
+#'     silent to the numerics but changes what the detector is doing,
+#'     so it is reported rather than left for the caller to infer --
+#'     the gap-aware auto-difference is the package's headline
+#'     contribution and "it is not in force here" is information the
+#'     user is entitled to.}
+#'   \item{gap_reason}{Character.  Why gap-dependence was or was not
+#'     established, suitable for narration.}
 #' @noRd
 .gap_aware_autodiff <- function(deltas, gaps, n_bins = 8) {
   ok <- !is.na(deltas) & !is.na(gaps) & gaps > 0
@@ -1116,7 +1138,10 @@ mt_flag_outliers <- function(x, threshold = NULL, prob_type = "joint",
     kde <- .safe_kde_fun(d)
     return(list(
       scale_fun = function(gap) rep(1, length(gap)),
-      kde_fun   = kde
+      kde_fun   = kde,
+      gap_dependent = FALSE,
+      gap_reason = sprintf(
+        "only %d valid (delta, gap) pair(s); need 10", length(d))
     ))
   }
 
@@ -1130,11 +1155,25 @@ mt_flag_outliers <- function(x, threshold = NULL, prob_type = "joint",
   ## ensure unique breaks
   breaks <- unique(breaks)
   if (length(breaks) < 3) {
-    ## all gaps are essentially the same — no gap dependence
+    ## Fewer than 3 distinct quantile breaks -> the binning cannot resolve
+    ## a gap trend, so fall back to a constant scale.  NOTE this is NOT
+    ## the same as "all gaps are the same" (which is what this comment
+    ## used to claim).  A strictly two-valued gap distribution -- the
+    ## ordinary day/night duty cycle -- can land here or on the binned
+    ## path depending only on the MIXING PROPORTION of the two values,
+    ## because that decides whether any quantile probe interpolates
+    ## strictly between them.  So the same tag on the same schedule can
+    ## change regime between seasons.  Reported via `gap_dependent`.
     kde <- .safe_kde_fun(d)
     return(list(
       scale_fun = function(gap) rep(1, length(gap)),
-      kde_fun   = kde
+      kde_fun   = kde,
+      gap_dependent = FALSE,
+      gap_reason = sprintf(
+        paste0("gap distribution yields only %d distinct quantile ",
+               "break(s); need 3 (a strictly two-valued duty cycle can ",
+               "land here depending on its mixing proportion)"),
+        length(breaks))
     ))
   }
   breaks[1] <- breaks[1] - 1e-10
@@ -1163,7 +1202,21 @@ mt_flag_outliers <- function(x, threshold = NULL, prob_type = "joint",
 
   kde <- .safe_kde_fun(d_norm)
 
-  list(scale_fun = scale_fun, kde_fun = kde)
+  ## A binned path can still be constant in effect: if every bin's MAD was
+  ## zero or NA it was replaced by `overall_mad` above, and approxfun on
+  ## identical ordinates is a constant function.  Report that as not
+  ## gap-dependent too -- what matters to the caller is whether the scale
+  ## varies with the gap, not which branch produced it.
+  varies <- length(unique(bin_mad_v)) > 1L
+  list(scale_fun = scale_fun, kde_fun = kde,
+       gap_dependent = varies,
+       gap_reason = if (varies) {
+         sprintf("estimated across %d gap bin(s)", length(bin_mad_v))
+       } else {
+         sprintf(paste0("%d gap bin(s) formed but all bin scales are ",
+                        "identical; scale is constant in effect"),
+                 length(bin_mad_v))
+       })
 }
 
 
