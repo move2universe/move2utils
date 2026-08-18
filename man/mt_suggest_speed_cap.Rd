@@ -55,9 +55,10 @@ so the user can read their congruence directly.}
 sprint-margined per-species ceiling), the function warns when the
 suggested cap exceeds this value, matching
 \code{\link{mt_flag_speed_cap}}'s warning text.  When \code{NULL},
-falls back to the universal mode-agnostic 55 m/s ceiling derived
-from Hirt 2017 (the upper-95\\%-CI of the fastest biological
-flier).  A suggested cap above the ceiling indicates the gap
+falls back to the universal mode-agnostic 55 m/s ceiling -- an
+impossibility bound on speed \emph{sustained} between two fixes,
+not a species-specific prediction and not a confidence bound.
+A suggested cap above the ceiling indicates the gap
 finder is detecting a structural break inside the data's outlier
 tail rather than between bulk and outliers.}
 

@@ -583,6 +583,7 @@ one-call entrypoint.
 }
 \section{Runtime}{
 
+
 Runtime is governed by the number of iterations rather than by track
 length.  Each iteration re-scores every fix still standing, so cost is
 approximately (iterations x surviving fixes).  The iteration count is
@@ -595,11 +596,11 @@ Measured on a golden-eagle track of 855,712 fixes (after hygiene),
 carrying a coherent GPS-spoof block:
 
 \tabular{lrr}{
-  \strong{Input} \tab \strong{Fixes} \tab \strong{Time} \cr
-  clean prefix of the same track      \tab  40,000 \tab   0.4 s \cr
-  clean prefix of the same track      \tab  80,000 \tab   0.9 s \cr
-  full track, auto cap                \tab 855,712 \tab 622 s \cr
-  full track, \code{mass} / \code{mode} \tab 855,712 \tab  17 s
+\strong{Input} \tab \strong{Fixes} \tab \strong{Time} \cr
+clean prefix of the same track      \tab  40,000 \tab   0.4 s \cr
+clean prefix of the same track      \tab  80,000 \tab   0.9 s \cr
+full track, auto cap                \tab 855,712 \tab 622 s \cr
+full track, \code{mass} / \code{mode} \tab 855,712 \tab  17 s
 }
 
 Supplying a physiological cap shortens the discovery loop: the pre-peel
@@ -645,13 +646,23 @@ overriding them would break the cascade's documented design:
 Detour's leg gate (\code{min_leg > 0}) is a standalone-use
 gating mechanism that prevents the detour ratio from firing
 on small-displacement noise wiggles.  Inside the cascade,
-the conjunction rule plays the same gating role: detour
-contributes to flags only when it agrees with another
-detector under the class-aware rule.  Exposing
+the agreement rule was intended to play the same gating role.
+\strong{Note the scope of that argument.}  Under
+\code{consensus = "class_aware"} it holds exactly -- every
+class-aware clause requires at least two detectors, so detour
+never flags alone.  Under the current default
+\code{"evidence_corroborated"} it does \emph{not} hold for
+detour specifically: detour is the designated
+\code{solo_cols} detector and may flag alone when its
+evidence is saturated, so on that path a fix can be flagged
+with neither corroboration nor a leg gate.  That is the
+intended solo exception (an out-and-back is high-specificity),
+but it means \code{min_leg = 0} is not backed by the
+conjunction on the default path.  Exposing
 \code{min_leg} on the cascade would create two competing
 gates running in parallel, with documented failure modes
 where a fix is gated out by \code{min_leg} despite
-satisfying the conjunction.  Users who specifically want
+satisfying the agreement rule.  Users who specifically want
 standalone leg-gated detour should call
 \code{\link{mt_flag_outliers_detour}} directly.
 \item \strong{speed_cap \code{threshold_type}} is hardcoded

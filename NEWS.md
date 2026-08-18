@@ -1,3 +1,56 @@
+# move2utils (development version)
+
+**Documentation only.** `DESCRIPTION` stays at 0.4.5 and no detection path changes:
+flags, consensus and removed rows are byte-identical to the release. One
+user-visible *message* string changes, and the manual pages are regenerated.
+
+## The 55 m/s sanity ceiling is no longer attributed to a Hirt et al. (2017) confidence bound
+
+The auto-cap's biological-sanity ceiling was documented in four places — the roxygen
+of `mt_flag_speed_cap()` and `mt_suggest_speed_cap()`, both functions' runtime
+messages, and `HEURISTICS.md` — as sitting "above the Hirt et al. (2017) 95% upper CI
+of the maximum biological speed across all masses and modes (~52.6 m/s at 1.35 kg)".
+
+**That attribution was wrong in two ways.**
+
+- **The interval is not Hirt's.** Hirt et al. publish fitted parameters with marginal
+  standard errors, not an interval on maximum speed. The ~52.6 m/s figure is this
+  package's own delta-method propagation of those SEs, reproducible as the upper bound
+  of `v_phys_estimate(mass = 1.35, mode = "flying")` (52.56 m/s). Citing it to the
+  article attributed to it an interval it never contained.
+- **"Across all masses and modes" was false.** That upper CI **exceeds 55 m/s for
+  flying between 1.69 kg and 15.65 kg, peaking at 60.88 m/s at 4.89 kg**, because the
+  interval widens with mass while the central prediction falls away from its peak near
+  1.38 kg. The bound was cleared only at the single mass quoted.
+
+The interval is in any case too crude to carry the claim: it uses marginal SEs with no
+parameter covariance (a known limitation), giving [1.23, 60.88] m/s at 4.89 kg and
+[0.00, 58.52] at 10 kg.
+
+**What the ceiling is now documented as:** an impossibility bound on speed *sustained*
+over the interval separating two fixes. Nothing living sustains 55 m/s over such an
+interval, so a step implying one is positional error or a tag no longer on the animal
+rather than movement. This needs no interval and no allometry, and it is what the cap
+actually tests — a stooping falcon exceeding 55 m/s for seconds is not a counterexample.
+
+The runtime message now reads `(universal sustained-speed bound, not species-specific)`
+where it previously named the Hirt upper CI. **The ceiling value is unchanged at 55 m/s
+and remains warning-only**; it never alters the cap.
+
+In `HEURISTICS.md` the row moves from the **DERIVED** table to **HEURISTIC**: a round
+number above a stated bound is a documented choice, not a published constant. The
+per-species allometric `v_max` row is unaffected and stays DERIVED — `v_phys_estimate()`
+traces cleanly to the parameters of Hirt et al.'s Supplementary Table 4, which are
+printed in `?v_phys_estimate`.
+
+Found by the companion outlier-paper project, verified here against source and arithmetic.
+
+## Manual pages regenerated
+
+`man/` had drifted from the roxygen it is generated from: the corrected scope caveat on
+the detour leg-gate argument in `?mt_clean_track` was present in `R/` but missing from
+the shipped manual page. Five pages are regenerated, so `R/` and `man/` agree again.
+
 # move2utils 0.4.5 — cleaned-track return no longer carries flag columns
 
 `mt_clean_track(x)` with the default `remove = TRUE` now returns **only

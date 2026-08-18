@@ -371,9 +371,9 @@ test_that("mt_suggest_speed_cap warns above 55 m/s biological-sanity ceiling", {
   ## on where the gap detector lands.  Test that the warning text
   ## fires when v > 55 and is silent otherwise.
   if (!is.na(v) && v > 55) {
-    expect_true(any(grepl("exceeds.*m/s.*Hirt 2017", msgs)))
+    expect_true(any(grepl("exceeds.*m/s.*sustained-speed bound", msgs)))
   } else if (!is.na(v)) {
-    expect_false(any(grepl("exceeds.*m/s.*Hirt 2017", msgs)))
+    expect_false(any(grepl("exceeds.*m/s.*sustained-speed bound", msgs)))
   }
 })
 
@@ -398,17 +398,22 @@ test_that("mt_suggest_speed_cap user-supplied physiological_ceiling overrides 55
 
   msgs <- character(0)
   withCallingHandlers(
-    v <- mt_suggest_speed_cap(x, physiological_ceiling = 5, plot = FALSE),
+    v <- mt_suggest_speed_cap(x, physiological_ceiling = 1, plot = FALSE),
     message = function(m) {
       msgs <<- c(msgs, conditionMessage(m))
       invokeRestart("muffleMessage")
     })
-  ## With 5 m/s ceiling and a 30 m/s spike, the suggested cap (if
-  ## found) lands above 5 m/s and the warning should mention the
-  ## user-supplied ceiling text.
-  if (!is.na(v) && v > 5) {
-    expect_true(any(grepl("user-supplied physiological_ceiling", msgs)))
-  }
+  ## The ceiling is set to 1 m/s, below the cap this fixture yields
+  ## (~2.9 m/s), so the override warning is guaranteed to fire.  Assert
+  ## that rather than guarding on it: guarding was why this test
+  ## registered as "empty" -- the old guard (`v > 5`) was FALSE for this
+  ## fixture, so no expectation ever executed and the override branch
+  ## was never actually tested.
+  expect_false(is.na(v))
+  expect_gt(v, 1)
+  ## The override must replace the default ceiling text, not add to it.
+  expect_true(any(grepl("user-supplied physiological_ceiling", msgs)))
+  expect_false(any(grepl("sustained-speed bound", msgs)))
 })
 
 
@@ -580,7 +585,7 @@ test_that("physiological_ceiling: NULL fallback uses 55 m/s warning text", {
   x <- make_high_autocap_track()
   expect_message(
     mt_flag_speed_cap(x, plot = FALSE, threshold_type = "auto"),
-    "Hirt 2017 universal upper-CI"
+    "universal sustained-speed bound"
   )
 })
 

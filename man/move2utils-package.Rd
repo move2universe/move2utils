@@ -102,8 +102,13 @@ Useful links:
 Authors:
 \itemize{
   \item Kamran Safi \email{ksafi@ab.mpg.de} (\href{https://orcid.org/0000-0002-8418-6759}{ORCID})
-  \item Anne K. Scharf (dBBMM/dBGB R interface and variance estimators)
   \item Bart Kranstauber (dBBMM/dBGB R interface and variance estimators)
+  \item Anne K. Scharf (dBBMM/dBGB R interface and variance estimators)
+}
+
+Other contributors:
+\itemize{
+  \item Finn Robertson [contributor]
 }
 
 }

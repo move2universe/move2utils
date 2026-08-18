@@ -43,10 +43,16 @@ lower bound on absolute step length (metres).}
 biological-sanity warning: when the data-driven cap exceeds
 this value, a message is emitted suggesting the user supply a
 hard \code{v_max} or the \code{(mass, mode)} allometric prior
-to \code{mt_clean_track()}.  \code{NULL} falls back to the
-universal mode-agnostic ceiling of 55 m/s (Hirt et al. 2017
-95\\% upper-CI of the maximum biological speed across all masses
-and modes).  When the user has \code{(mass, mode)} information,
+to \code{mt_clean_track()}.  \code{NULL} falls back to a
+universal mode-agnostic ceiling of 55 m/s.  This is a
+deliberately loose impossibility bound on speed \emph{sustained}
+over the interval separating two fixes: nothing living sustains
+55 m/s over such an interval, so a step implying one is
+positional error or a tag no longer on the animal rather than
+movement.  It is neither a species-specific prediction nor a
+confidence bound -- for a per-species cap use
+\code{v_phys_estimate(mass, mode)}.  When the user has
+\code{(mass, mode)} information,
 passing \code{physiological_ceiling = v_phys_estimate(mass,
 mode) * 1.25} gives a sharper per-species check (sprint margin
 on the central allometric prediction).  The check is

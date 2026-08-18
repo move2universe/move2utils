@@ -73,10 +73,16 @@
 #'   biological-sanity warning: when the data-driven cap exceeds
 #'   this value, a message is emitted suggesting the user supply a
 #'   hard \code{v_max} or the \code{(mass, mode)} allometric prior
-#'   to \code{mt_clean_track()}.  \code{NULL} falls back to the
-#'   universal mode-agnostic ceiling of 55 m/s (Hirt et al. 2017
-#'   95\% upper-CI of the maximum biological speed across all masses
-#'   and modes).  When the user has \code{(mass, mode)} information,
+#'   to \code{mt_clean_track()}.  \code{NULL} falls back to a
+#'   universal mode-agnostic ceiling of 55 m/s.  This is a
+#'   deliberately loose impossibility bound on speed \emph{sustained}
+#'   over the interval separating two fixes: nothing living sustains
+#'   55 m/s over such an interval, so a step implying one is
+#'   positional error or a tag no longer on the animal rather than
+#'   movement.  It is neither a species-specific prediction nor a
+#'   confidence bound -- for a per-species cap use
+#'   \code{v_phys_estimate(mass, mode)}.  When the user has
+#'   \code{(mass, mode)} information,
 #'   passing \code{physiological_ceiling = v_phys_estimate(mass,
 #'   mode) * 1.25} gives a sharper per-species check (sprint margin
 #'   on the central allometric prediction).  The check is
@@ -183,8 +189,9 @@ mt_flag_speed_cap <- function(x,
   ## brief narrator helper -- suppressed under silent = TRUE
   say <- function(...) if (!silent) message(...)
   ## physiological ceiling validation: NULL (use 55 m/s fallback) or
-  ## a positive scalar.  The 55 m/s fallback is the Hirt 2017 mode-
-  ## agnostic upper-CI; users with (mass, mode) should pass a
+  ## a positive scalar.  The 55 m/s fallback is a mode-agnostic
+  ## sustained-speed impossibility bound; users with (mass, mode)
+  ## should pass a
   ## sharper value (v_phys_estimate(mass, mode) * 1.25 is the
   ## suggested form).
   if (!is.null(physiological_ceiling)) {
@@ -373,7 +380,7 @@ mt_flag_speed_cap <- function(x,
   ceiling_used   <- if (is.null(physiological_ceiling))
                       55 else physiological_ceiling
   ceiling_source <- if (is.null(physiological_ceiling))
-                      "Hirt 2017 universal upper-CI (~52.6 m/s, fastest flier)"
+                      "universal sustained-speed bound, not species-specific"
                     else
                       "user-supplied physiological_ceiling"
   if (threshold_type != "hard" && is.finite(v_max_used) &&
@@ -789,9 +796,10 @@ mt_flag_speed_cap <- function(x,
 #'   sprint-margined per-species ceiling), the function warns when the
 #'   suggested cap exceeds this value, matching
 #'   \code{\link{mt_flag_speed_cap}}'s warning text.  When \code{NULL},
-#'   falls back to the universal mode-agnostic 55 m/s ceiling derived
-#'   from Hirt 2017 (the upper-95\%-CI of the fastest biological
-#'   flier).  A suggested cap above the ceiling indicates the gap
+#'   falls back to the universal mode-agnostic 55 m/s ceiling -- an
+#'   impossibility bound on speed \emph{sustained} between two fixes,
+#'   not a species-specific prediction and not a confidence bound.
+#'   A suggested cap above the ceiling indicates the gap
 #'   finder is detecting a structural break inside the data's outlier
 #'   tail rather than between bulk and outliers.
 #' @param mass,mode Optional.  When \code{mass} is supplied (kg), an
@@ -983,7 +991,7 @@ mt_suggest_speed_cap <- function(x, method = c("auto", "entropy", "gap"),
     ceiling_used   <- if (is.null(physiological_ceiling))
                         55 else physiological_ceiling
     ceiling_source <- if (is.null(physiological_ceiling))
-                        "Hirt 2017 universal upper-CI (~52.6 m/s, fastest flier)"
+                        "universal sustained-speed bound, not species-specific"
                       else
                         "user-supplied physiological_ceiling"
     if (v_suggest > ceiling_used) {
