@@ -163,9 +163,10 @@ summary(res$seq_joint_prob)
 
 }
 \references{
-Safi, K. (in preparation). Self-thresholding hierarchical
+Safi, K. (2026). Self-thresholding hierarchical
 outlier-detection for animal movement tracks. Companion paper to
-the \pkg{move2utils} R package. Preprint: bioRxiv (DOI forthcoming).
+the \pkg{move2utils} R package. bioRxiv preprint, submitted to
+Methods in Ecology and Evolution. \doi{10.64898/2026.07.11.737894}
 }
 \seealso{
 \code{\link{mt_clean_track}} (recommended unified

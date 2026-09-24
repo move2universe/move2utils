@@ -200,15 +200,15 @@ Each adjustable parameter targets a specific empirically-distinguishable failure
 
 Several methods are ported onto `move2` from their original descriptions. The corridor concept follows LaPoint, Gallery, Wikelski & Kays (2013) *Landscape Ecology* 28: 1615–1630. The dynamic Brownian-bridge utilisation distribution and motion variance follow Horne, Garton, Krone & Lewis (2007) *Ecology* 88: 2354–2363 and Kranstauber, Kays, LaPoint, Wikelski & Safi (2012) *Journal of Animal Ecology* 81: 738–746, with the directional bivariate-Gaussian-bridge variant after Kranstauber, Safi & Bartumeus (2014) *Movement Ecology* 2: 5. Utilisation distributions are compared by the Earth mover's distance (Rubner, Tomasi & Guibas 2000 *International Journal of Computer Vision* 40: 99–121), computed via the Sinkhorn optimal-transport approximation (Cuturi 2013 *Advances in Neural Information Processing Systems* 26).
 
-The outlier-detection framework — four complementary primitives (geometric bridge residual, path-vs-displacement detour ratio, probabilistic movement-metric, step-level speed cap) sharing a gap-aware non-parametric normalisation and combinable through an iterative unified detector with evidence-corroborated flagging (the default; `class_aware` and other rules selectable via `consensus =`) plus topological block expansion — is the novel scientific content of the package and is described in the companion paper (in preparation, *Methods in Ecology and Evolution*).
+The outlier-detection framework — four complementary primitives (geometric bridge residual, path-vs-displacement detour ratio, probabilistic movement-metric, step-level speed cap) sharing a gap-aware non-parametric normalisation and combinable through an iterative unified detector with evidence-corroborated flagging (the default; `class_aware` and other rules selectable via `consensus =`) plus topological block expansion — is the novel scientific content of the package and is described in the companion paper (bioRxiv preprint, submitted to *Methods in Ecology and Evolution*).
 
 ## Citation
 
-If you use `move2utils`, please cite the Application Note; for the outlier-detection methodology specifically, also cite the companion paper (forthcoming on bioRxiv). `citation("move2utils")` returns both.
+If you use `move2utils`, please cite the Application Note; for the outlier-detection methodology specifically, also cite the companion paper. Both are bioRxiv preprints, submitted to *Methods in Ecology and Evolution*. `citation("move2utils")` returns both.
 
 > Kranstauber B, Safi K, Scharf AK (2026). *`move2utils`: a utility toolkit for the `move2` ecosystem.* bioRxiv. doi:[10.64898/2026.07.07.736908](https://doi.org/10.64898/2026.07.07.736908).
 
-> Safi K (2026). *Self-thresholding hierarchical outlier-detection for animal movement tracks.* bioRxiv (in preparation).
+> Safi K (2026). *Self-thresholding hierarchical outlier-detection for animal movement tracks.* bioRxiv. doi:[10.64898/2026.07.11.737894](https://doi.org/10.64898/2026.07.11.737894).
 
 ## Contributing
 

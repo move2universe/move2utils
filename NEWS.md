@@ -1,10 +1,47 @@
-# move2utils (development version)
+# move2utils 0.4.5 — cleaned-track return no longer carries flag columns
 
-**Documentation only.** `DESCRIPTION` stays at 0.4.5 and no detection path changes:
-flags, consensus and removed rows are byte-identical to the release. One
-user-visible *message* string changes, and the manual pages are regenerated.
+`mt_clean_track(x)` with the default `remove = TRUE` now returns **only
+the caller's original columns** (minus the flagged rows). The cascade's
+annotation columns (`is_outlier`, `flagged_by_*`, `loglr_*`,
+`combined_evidence`, `block_id`, `error_class`, `flag_iteration`) are no
+longer attached to the removed-rows return.
 
-## The 55 m/s sanity ceiling is no longer attributed to a Hirt et al. (2017) confidence bound
+**Why.** On a `remove = TRUE` return the object is *shrunk*, so those
+columns no longer align to the original row indices. Indexing them by a
+pre-removal position (e.g. a row number computed on the full input)
+silently reads a *different, shifted fix* — which reads as "the cascade
+missed an outlier it actually removed". Dropping the columns makes that
+misuse impossible instead of merely discouraged.
+
+**No behaviour change to detection.** Flags, consensus, and which rows
+are removed are all unchanged. To inspect flags, call with
+`remove = FALSE` (as `mt_diagnose_flags()` / `mt_diagnose_clean_track()`
+already require).
+
+## Post-release documentation, folded into 0.4.5 (2026-08-17 → 2026-09-18)
+
+The tag `v0.4.5` was moved on 2026-09-18 to include the documentation line written
+after the July release, so that `main`, the tag, the public mirror and the installed
+package all describe one state. **No detection path changed:** flags, consensus and
+removed rows are identical to the July build. Two user-visible *message* strings
+changed, one function returns two extra informational fields, and the manual pages
+were regenerated. In order:
+
+- **2026-08-17.** The refuted "empirically validated default / best F1" claim removed
+  from `?mt_clean_track`, `man/` and this file; the replacement states that there is
+  *no evidence* `evidence_corroborated` detects better than `class_aware`, not that the
+  two are equivalent. `HEURISTICS.md` gains the default rule's constants
+  (`evidence_threshold`, `evidence_C`, `solo_cols`, the saturation multiple).
+  `?mt_clean_track` gains `@section Runtime`. `.gap_aware_autodiff()` now reports
+  whether gap-aware scaling is in force (fields `gap_dependent`, `gap_reason`; a note in
+  the narration when it is not) instead of falling back to a constant scale silently.
+- **2026-08-18.** The 55 m/s ceiling's provenance corrected — below.
+- **2026-09-08.** `inst/CITATION`, `README.md` and four `@references` blocks updated:
+  both manuscripts are submitted to *Methods in Ecology and Evolution* and on bioRxiv
+  (Application Note 10.64898/2026.07.07.736908; outlier paper 10.64898/2026.07.11.737894).
+  They had said "in preparation" for fifteen days after the outlier preprint appeared.
+
+### The 55 m/s sanity ceiling is no longer attributed to a Hirt et al. (2017) confidence bound
 
 The auto-cap's biological-sanity ceiling was documented in four places — the roxygen
 of `mt_flag_speed_cap()` and `mt_suggest_speed_cap()`, both functions' runtime
@@ -45,31 +82,11 @@ printed in `?v_phys_estimate`.
 
 Found by the companion outlier-paper project, verified here against source and arithmetic.
 
-## Manual pages regenerated
+### Manual pages regenerated
 
 `man/` had drifted from the roxygen it is generated from: the corrected scope caveat on
 the detour leg-gate argument in `?mt_clean_track` was present in `R/` but missing from
 the shipped manual page. Five pages are regenerated, so `R/` and `man/` agree again.
-
-# move2utils 0.4.5 — cleaned-track return no longer carries flag columns
-
-`mt_clean_track(x)` with the default `remove = TRUE` now returns **only
-the caller's original columns** (minus the flagged rows). The cascade's
-annotation columns (`is_outlier`, `flagged_by_*`, `loglr_*`,
-`combined_evidence`, `block_id`, `error_class`, `flag_iteration`) are no
-longer attached to the removed-rows return.
-
-**Why.** On a `remove = TRUE` return the object is *shrunk*, so those
-columns no longer align to the original row indices. Indexing them by a
-pre-removal position (e.g. a row number computed on the full input)
-silently reads a *different, shifted fix* — which reads as "the cascade
-missed an outlier it actually removed". Dropping the columns makes that
-misuse impossible instead of merely discouraged.
-
-**No behaviour change to detection.** Flags, consensus, and which rows
-are removed are all unchanged. To inspect flags, call with
-`remove = FALSE` (as `mt_diagnose_flags()` / `mt_diagnose_clean_track()`
-already require).
 
 # move2utils 0.4.4 — block-expansion monotonicity fix
 
