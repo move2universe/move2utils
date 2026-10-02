@@ -39,8 +39,9 @@ Description: Utility functions for working with animal movement data stored
     spatial stack.
 License: GPL (>= 3)
 URL: https://github.com/move2universe/move2utils,
-    https://gitlab.mpcdf.mpg.de/macroeco/move2utils_mee_note,
-    https://gitlab.mpcdf.mpg.de/macroeco/outlier_mee_paper
+    https://move2universe.github.io/move2utils,
+    https://doi.org/10.64898/2026.07.07.736908,
+    https://doi.org/10.64898/2026.07.11.737894
 BugReports: https://github.com/move2universe/move2utils/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

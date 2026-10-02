@@ -7,7 +7,7 @@
 [![R >= 4.5.0](https://img.shields.io/badge/R-%3E%3D%204.5.0-blue.svg)](https://www.r-project.org/)
 <!-- badges: end -->
 
-> **Public release.** `move2utils` is developed on [MPCDF GitLab](https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils) and mirrored here for public use. Please report bugs and ask questions by [opening an issue](https://github.com/move2universe/move2utils/issues).
+> **Public release.** The source of truth for `move2utils` is its development repository on [MPCDF GitLab](https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils); each release is mirrored to [GitHub](https://github.com/move2universe/move2utils) for public use. Documentation: <https://move2universe.github.io/move2utils>. Please report bugs and ask questions by [opening an issue](https://github.com/move2universe/move2utils/issues).
 
 Utility functions for animal-movement data stored as [`move2`](https://bartk.gitlab.io/move2/) objects. A home for a handful of ports from the legacy `move` package, together with a small amount of novel scientific machinery described in a companion paper.
 

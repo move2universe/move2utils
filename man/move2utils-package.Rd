@@ -89,10 +89,11 @@ is rejected rather than silently dropped. See \code{vignette(package = "move2uti
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils}
-  \item \url{https://gitlab.mpcdf.mpg.de/macroeco/move2utils_mee_note}
-  \item \url{https://gitlab.mpcdf.mpg.de/macroeco/outlier_mee_paper}
-  \item Report bugs at \url{https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils/-/issues}
+  \item \url{https://github.com/move2universe/move2utils}
+  \item \url{https://move2universe.github.io/move2utils}
+  \item \url{https://doi.org/10.64898/2026.07.07.736908}
+  \item \url{https://doi.org/10.64898/2026.07.11.737894}
+  \item Report bugs at \url{https://github.com/move2universe/move2utils/issues}
 }
 
 }

@@ -1,7 +1,7 @@
 # Contributing to move2utils
 
 `move2utils` is developed on **MPCDF GitLab**
-(<https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils>); this
+(<https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils>), which is the source of truth; this
 GitHub repository is its public release. You are very welcome to:
 
 - **Report bugs / request features** by opening an issue here, ideally with a

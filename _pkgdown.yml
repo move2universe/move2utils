@@ -1,0 +1,157 @@
+url: https://move2universe.github.io/move2utils
+template:
+  bootstrap: 5
+  bootswatch: flatly
+navbar:
+  structure:
+    left:
+    - intro
+    - articles
+    - reference
+    - news
+    right:
+    - search
+    - github
+  components:
+    intro:
+      text: Get started
+      href: articles/OUTLIER_1_getting_started.html
+    articles:
+      text: Articles
+      menu:
+      - text: Outlier cleaning — read in this order
+      - text: 1. Getting started — one-call mt_clean_track()
+        href: articles/OUTLIER_1_getting_started.html
+      - text: 2. Post-run diagnostic suite
+        href: articles/OUTLIER_2_diagnose_clean_track.html
+      - text: 3. State-conditional cleaning recipe
+        href: articles/OUTLIER_3_state_conditional.html
+      - text: 4. Bridge primitive in depth
+        href: articles/OUTLIER_4_outlier_bridge.html
+      - text: 5. Multi-scale persistence annotation
+        href: articles/OUTLIER_5_persistence_score.html
+      - text: '6. Troubleshooting: when it doesn''t do what you want'
+        href: articles/OUTLIER_6_troubleshooting.html
+      - text: 'Heterogeneous error regimes: one sensor at a time'
+        href: articles/OUTLIER_heterogeneous_error_regimes.html
+      - text: '---------'
+      - text: Worked examples
+      - text: 'White-stork: full narrated pipeline'
+        href: articles/OUTLIER_example_outlier_whitestork.html
+      - text: 'Leo: migration on irregular satellite data'
+        href: articles/OUTLIER_example_leo_migration.html
+      - text: '---------'
+      - text: Utilisation distributions
+      - text: dBBMM utilisation distribution
+        href: articles/UD_dbbmm_ud.html
+      - text: dBGB (directional) UD
+        href: articles/UD_dbgb_ud.html
+      - text: Per-state (bursted) UDs
+        href: articles/UD_bursted_uds.html
+      - text: Gap-aware UD
+        href: articles/UD_gap_aware_ud.html
+      - text: Comparing UDs (overlap, EMD)
+        href: articles/UD_ud_comparison.html
+      - text: '---------'
+      - text: Trajectory utilities
+      - text: Corridor detection
+        href: articles/corridor.html
+      - text: Interpolate and thin
+        href: articles/interpolate_and_thin.html
+    github:
+      icon: fa-github
+      href: https://github.com/move2universe/move2utils
+      aria-label: GitHub repo
+reference:
+- title: Unified outlier cleaning
+  desc: 'One-call entry point — orchestrates the four primitives with the class-aware
+    consensus rule (default; user-configurable via `consensus =`), plus topological
+    block expansion. Two post-run diagnostics: `mt_diagnose_clean_track()` for cleaning
+    health, `mt_diagnose_flags()` for per-detector flag composition + consensus-mode
+    comparison.'
+  contents:
+  - mt_clean_track
+  - mt_diagnose_clean_track
+  - mt_diagnose_flags
+  - v_phys_estimate
+- title: Outlier-detection primitives
+  desc: The four primitives composed by mt_clean_track(). Run individually for fine-grained
+    control.
+  contents:
+  - mt_flag_outliers_bridge
+  - mt_flag_outliers_detour
+  - mt_flag_outliers
+  - mt_flag_speed_cap
+  - mt_suggest_speed_cap
+  - mt_peel_speed
+- title: Consensus rule (combine per-detector flags)
+  desc: Externalised voting/consensus across detector outputs. Used internally by
+    mt_clean_track() and exported so users running their own cascades (or running
+    the four primitives standalone) can apply the same rules to their own per-detector
+    flag columns.
+  contents: mt_flag_consensus
+- title: State-aware bridge variants (standalone)
+  desc: Per-axis bridge motion variance with an envelope flag rule across three Z
+    channels. Exported as standalone primitives, not currently wired into mt_clean_track()'s
+    cascade.
+  contents:
+  - mt_flag_outliers_dbgb
+  - mt_flag_outliers_dbbmm
+- title: Alternative outlier strategies
+  desc: Voting / scanning alternatives on the probability surface. See mt_clean_track()'s
+    @seealso for when each is the right reach.
+  contents:
+  - mt_sequential_outliers
+  - mt_combined_outliers
+- title: Multi-scale persistence annotation
+  desc: Detector-agnostic confidence helper that annotates flagged fixes with a persistence
+    score across temporal scales.
+  contents: mt_persistence_score
+- title: Pre-cleaning helpers
+  desc: Filter fixes whose GPS geometry is unreliable before running the cleaner.
+  contents: mt_filter_gps_quality
+- title: Utilisation distributions and motion variance
+  desc: Dynamic Brownian-bridge variance estimation, UD computation on a common grid,
+    accessors and segment masking for the variance pipeline.
+  contents:
+  - mt_dbbmm_variance
+  - mt_dbbmm_ud
+  - mt_dbgb_variance
+  - mt_dbgb_ud
+  - mt_motion_variance
+  - mt_suggest_dbbmm_window
+  - ud_volume
+  - ud_outer_probability
+  - mt_mask_segments
+  - emd
+- title: Trajectory utilities
+  desc: Track segmentation, thinning, corridor detection.
+  contents:
+  - mt_corridor
+  - mt_thin_distance
+  - mt_thin_time
+- title: S3 print methods
+  desc: Internal print formatters for diagnostic objects.
+  contents:
+  - print.mt_dbbmm_variance
+  - print.mt_dbgb_variance
+home:
+  links:
+  - text: Companion paper (bioRxiv)
+    href: https://doi.org/10.64898/2026.07.11.737894
+  - text: Companion application note (bioRxiv)
+    href: https://doi.org/10.64898/2026.07.07.736908
+  sidebar:
+    structure:
+    - links
+    - license
+    - citation
+    - authors
+    - dev
+repo:
+  url:
+    home: https://github.com/move2universe/move2utils/
+    source: https://github.com/move2universe/move2utils/blob/main/
+    issue: https://github.com/move2universe/move2utils/issues/
+    user: https://github.com/
+  branch: main
