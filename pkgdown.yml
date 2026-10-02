@@ -1,0 +1,24 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  corridor: corridor.html
+  interpolate_and_thin: interpolate_and_thin.html
+  OUTLIER_1_getting_started: OUTLIER_1_getting_started.html
+  OUTLIER_2_diagnose_clean_track: OUTLIER_2_diagnose_clean_track.html
+  OUTLIER_3_state_conditional: OUTLIER_3_state_conditional.html
+  OUTLIER_4_outlier_bridge: OUTLIER_4_outlier_bridge.html
+  OUTLIER_5_persistence_score: OUTLIER_5_persistence_score.html
+  OUTLIER_6_troubleshooting: OUTLIER_6_troubleshooting.html
+  OUTLIER_example_leo_migration: OUTLIER_example_leo_migration.html
+  OUTLIER_example_outlier_whitestork: OUTLIER_example_outlier_whitestork.html
+  OUTLIER_heterogeneous_error_regimes: OUTLIER_heterogeneous_error_regimes.html
+  UD_bursted_uds: UD_bursted_uds.html
+  UD_dbbmm_ud: UD_dbbmm_ud.html
+  UD_dbgb_ud: UD_dbgb_ud.html
+  UD_gap_aware_ud: UD_gap_aware_ud.html
+  UD_ud_comparison: UD_ud_comparison.html
+last_built: 2026-10-02T07:56Z
+urls:
+  reference: https://move2universe.github.io/move2utils/reference
+  article: https://move2universe.github.io/move2utils/articles
