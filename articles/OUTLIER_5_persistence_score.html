@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -140,26 +140,25 @@ looking at the track more coarsely.</p>
 <p>For each flagged fix
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
 and each validation scale
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>∈</mo><mo stretchy="false" form="prefix">{</mo><mn>2</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>8</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">k \in
-\{2, 4, 8\}</annotation></semantics></math> (the default), the function
-computes:</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>∈</mo><mo stretchy="false" form="prefix">{</mo><mn>2</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>8</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">k \in \{2, 4, 8\}</annotation></semantics></math>
+(the default), the function computes:</p>
 <ul>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mtext mathvariant="normal">step</mtext><mi>k</mi><mtext mathvariant="normal">in</mtext></msubsup><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\text{step}_k^\text{in}(i)</annotation></semantics></math>:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mtext mathvariant="normal">step</mtext><mi>k</mi><mtext mathvariant="normal">in</mtext></msubsup><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{step}_k^\text{in}(i)</annotation></semantics></math>:
 distance from
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>x</mi><mrow><mi>i</mi><mo>−</mo><mi>k</mi></mrow></msub><annotation encoding="application/x-tex">x_{i-k}</annotation></semantics></math>
 to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>x</mi><mi>i</mi></msub><annotation encoding="application/x-tex">x_i</annotation></semantics></math>
 </li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mtext mathvariant="normal">step</mtext><mi>k</mi><mtext mathvariant="normal">out</mtext></msubsup><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\text{step}_k^\text{out}(i)</annotation></semantics></math>:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mtext mathvariant="normal">step</mtext><mi>k</mi><mtext mathvariant="normal">out</mtext></msubsup><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{step}_k^\text{out}(i)</annotation></semantics></math>:
 distance from
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>x</mi><mi>i</mi></msub><annotation encoding="application/x-tex">x_i</annotation></semantics></math>
 to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>x</mi><mrow><mi>i</mi><mo>+</mo><mi>k</mi></mrow></msub><annotation encoding="application/x-tex">x_{i+k}</annotation></semantics></math>
 </li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">turn</mtext><mi>k</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\text{turn}_k(i)</annotation></semantics></math>:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">turn</mtext><mi>k</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{turn}_k(i)</annotation></semantics></math>:
 turn angle at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>x</mi><mi>i</mi></msub><annotation encoding="application/x-tex">x_i</annotation></semantics></math>
 between the two long arms</li>
@@ -168,18 +167,18 @@ between the two long arms</li>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
 is built from the same quantities computed at <em>every</em> interior
 fix of the track (the candidate is not removed). A 2-D histogram of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><msub><mtext mathvariant="normal">step</mtext><mi>k</mi></msub><mo>,</mo><msub><mtext mathvariant="normal">turn</mtext><mi>k</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(\log\text{step}_k, \text{turn}_k)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mo>log</mo><msub><mtext mathvariant="normal">step</mtext><mi>k</mi></msub><mo>,</mo><msub><mtext mathvariant="normal">turn</mtext><mi>k</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(\log\text{step}_k, \text{turn}_k)</annotation></semantics></math>
 gives the joint density; a
-gap-on-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>−</mi><mi mathvariant="normal">log</mi></mrow><annotation encoding="application/x-tex">-\log</annotation></semantics></math>
+gap-on-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mo>log</mo></mrow><annotation encoding="application/x-tex">-\log</annotation></semantics></math>
 probability) threshold decides whether each candidate is flagged at
 scale
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>.</p>
 <p>The persistence score is</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>1</mn><mo>+</mo><munder><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mtext mathvariant="normal">scales</mtext></mrow></munder><mn>𝟙</mn><mo minsize="120%" maxsize="120%" stretchy="true" form="prefix">[</mo><mi>i</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> flagged at scale </mtext><mspace width="0.333em"></mspace></mrow><mi>k</mi><mo minsize="120%" maxsize="120%" stretchy="true" form="postfix">]</mo><mo>,</mo></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>1</mn><mo>+</mo><munder><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mtext mathvariant="normal">scales</mtext></mrow></munder><mn>𝟙</mn><mo minsize="1.2" maxsize="1.2" stretchy="false" form="prefix">[</mo><mi>i</mi><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> flagged at scale </mtext><mspace width="0.333em"></mspace></mrow><mi>k</mi><mo minsize="1.2" maxsize="1.2" stretchy="false" form="postfix">]</mo><mo>,</mo></mrow><annotation encoding="application/x-tex">
 p(i) = 1 + \sum_{k \in \text{scales}} \mathbb{1}\bigl[i \text{ flagged at scale } k\bigr],
 </annotation></semantics></math></p>
 <p>so
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo><mo>∈</mo><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>4</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">p(i) \in \{1, 2, 3, 4\}</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>∈</mo><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>4</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">p(i) \in \{1, 2, 3, 4\}</annotation></semantics></math>
 for the default <code>scales = c(2, 4, 8)</code>.</p>
 <div class="section level4">
 <h4 id="why-no-thinning">Why no thinning?<a class="anchor" aria-label="anchor" href="#why-no-thinning"></a>
@@ -215,7 +214,7 @@ the persistence score:</p>
 <span><span class="co">#&gt; No physiological speed cap supplied -- running with a data-driven cap chosen from your track.  This works well for most cases.  If your animal has multiple behavioural states (e.g. perched and flying) or you expect sustained-spoof errors, supplying `v_max =` (a published top speed in m/s) or `(mass = ..., mode = ...)` for the allometric estimate gives sharper results.  See `?v_phys_estimate` for the allometric helper; `?mt_clean_track` documents the failure modes of the auto-cap in detail.</span></span>
 <span><span class="co">#&gt; Auto-cap landed at 60.2 m/s -- above the Hirt 2017 95% upper CI of the maximum biological speed (~52.6 m/s).  The gap finder is detecting a structural break within the outlier tail. Supply `(mass, mode)` or a hard `v_max` for a principled physiological cap.  See `?v_phys_estimate`.</span></span>
 <span><span class="co">#&gt; Iter 1: bridge=20 prob=5 speed=23 detour=11 (v_max=60.2) | conjunction=22 | new=22 cumulative=22</span></span>
-<span><span class="co">#&gt; Iter 2: bridge=3 prob=16 speed=4 detour=2 (v_max=20.3) | conjunction=3 | new=3 cumulative=25</span></span>
+<span><span class="co">#&gt; Iter 2: bridge=3 prob=16 speed=4 detour=2 (v_max=25.0) | conjunction=3 | new=3 cumulative=25</span></span>
 <span><span class="co">#&gt; Iter 3: bridge=0 prob=12 speed=0 detour=2 (v_max=-) | conjunction=0 | new=0 cumulative=25</span></span>
 <span><span class="co">#&gt; === mt_clean_track: 25 flagged (1.430% of 1748); stopped: no_new_flags ===</span></span>
 <span><span class="co">#&gt;     Returning all rows with flag columns attached. To drop flagged rows, either re-run with remove = TRUE (the default) or subset: x[!x$is_outlier, ].</span></span>
@@ -278,7 +277,7 @@ FPs</th>
 <th>% FPs at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>≥</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">p \geq 3</annotation></semantics></math>
 </th>
-<th>TP<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>−</mi><annotation encoding="application/x-tex">-</annotation></semantics></math>FP
+<th>TP<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>−</mo><annotation encoding="application/x-tex">-</annotation></semantics></math>FP
 gap</th>
 </tr></thead>
 <tbody>
@@ -343,7 +342,7 @@ where persistence is discriminative:</p>
 <span><span class="co">#&gt; No physiological speed cap supplied -- running with a data-driven cap chosen from your track.  This works well for most cases.  If your animal has multiple behavioural states (e.g. perched and flying) or you expect sustained-spoof errors, supplying `v_max =` (a published top speed in m/s) or `(mass = ..., mode = ...)` for the allometric estimate gives sharper results.  See `?v_phys_estimate` for the allometric helper; `?mt_clean_track` documents the failure modes of the auto-cap in detail.</span></span>
 <span><span class="co">#&gt; Auto-cap landed at 60.2 m/s -- above the Hirt 2017 95% upper CI of the maximum biological speed (~52.6 m/s).  The gap finder is detecting a structural break within the outlier tail. Supply `(mass, mode)` or a hard `v_max` for a principled physiological cap.  See `?v_phys_estimate`.</span></span>
 <span><span class="co">#&gt; Iter 1: bridge=20 prob=5 speed=23 detour=11 (v_max=60.2) | conjunction=22 | new=22 cumulative=22</span></span>
-<span><span class="co">#&gt; Iter 2: bridge=3 prob=16 speed=4 detour=2 (v_max=20.3) | conjunction=3 | new=3 cumulative=25</span></span>
+<span><span class="co">#&gt; Iter 2: bridge=3 prob=16 speed=4 detour=2 (v_max=25.0) | conjunction=3 | new=3 cumulative=25</span></span>
 <span><span class="co">#&gt; Iter 3: bridge=0 prob=12 speed=0 detour=2 (v_max=-) | conjunction=0 | new=0 cumulative=25</span></span>
 <span><span class="co">#&gt; === mt_clean_track: 25 flagged (1.430% of 1748); stopped: no_new_flags ===</span></span>
 <span><span class="co">#&gt;     Returning all rows with flag columns attached. To drop flagged rows, either re-run with remove = TRUE (the default) or subset: x[!x$is_outlier, ].</span></span>
@@ -406,7 +405,7 @@ geometry warrants:</p>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≥</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">\geq 2</annotation></semantics></math>;
 scale 1 is the original flagger’s resolution and is already counted in
 the score’s
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>+</mi><mn>1</mn></mrow><annotation encoding="application/x-tex">+1</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">+1</annotation></semantics></math>
 constant.</p>
 </div>
 <div class="section level2">

@@ -9,7 +9,7 @@ object."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,17 +105,17 @@ per location, <code>NA</code> at track margins).</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fishers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_example.html" class="external-link">mt_example</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fishers</span> <span class="op">&lt;-</span> <span class="va">fishers</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_query.html" class="external-link">st_is_empty</a></span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span>, <span class="op">]</span></span></span>
-<span class="r-in"><span><span class="va">f1</span> <span class="op">&lt;-</span> <span class="va">fishers</span><span class="op">[</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_track_id.html" class="external-link">mt_track_id</a></span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span> <span class="op">==</span> <span class="st">"F1"</span>, <span class="op">]</span></span></span>
-<span class="r-in"><span><span class="va">f1_proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">f1</span>, <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_aeqd_crs.html" class="external-link">mt_aeqd_crs</a></span><span class="op">(</span><span class="va">f1</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">var_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_dbbmm_variance.html">mt_dbbmm_variance</a></span><span class="op">(</span><span class="va">f1_proj</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
-<span class="r-in"><span>                              window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">leroy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">fishers</span>, .track_id <span class="op">=</span> <span class="st">"M1"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">leroy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">leroy</span>, <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_aeqd_crs.html" class="external-link">mt_aeqd_crs</a></span><span class="op">(</span><span class="va">leroy</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">var_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_dbbmm_variance.html">mt_dbbmm_variance</a></span><span class="op">(</span><span class="va">leroy</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
+<span class="r-in"><span>                             window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">mt_motion_variance</span><span class="op">(</span><span class="va">var_obj</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] NA NA NA NA NA NA</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

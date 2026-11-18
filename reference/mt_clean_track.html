@@ -23,7 +23,7 @@ per-fix scoring structurally cannot resolve."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -222,8 +222,7 @@ available), <code>"weighted_evidence"</code> (net evidence \(&gt; 0\)
 without the corroboration safeguard), <code>"strict"</code>,
 <code>"majority"</code>, <code>"speed_trusted"</code>, <code>"any"</code>,
 <code>"custom"</code>.  See <code><a href="mt_flag_consensus.html">mt_flag_consensus</a></code> for each mode
-and <code>DESIGN_evidence_accumulation.md</code> for the evidence
-framework.  The block-expansion step
+and the evidence framework.  The block-expansion step
 (when <code>expand_blocks = TRUE</code>) is independent of
 <code>consensus</code> – it identifies disconnected components
 directly from the speed distribution, so coherent outlier blocks
@@ -289,14 +288,12 @@ integer caps iteration at that number of passes.</p></dd>
 <dt id="arg-max-iterations">max_iterations<a class="anchor" aria-label="anchor" href="#arg-max-iterations"></a></dt>
 <dd><p>Integer.  Hard safety cap on iteration count
 even with <code>iterations = "until_clean"</code>.  Default 100 is
-EMPIRICALLY TUNED (CASCADE_AUDIT_2026-05-11.md Section 3.4 +
-8): the iteration-count distribution across all audit tracks
-tops out at 22 iter for legitimate convergence on CPF / cohort;
-K02 (block contamination, auto-cap path) is the longest
-documented legitimate convergence at 61 iter.  100 covers K02
-with ~39-iter margin AND caps multi-state failure modes
-(WH17-class tracks that never converge) at half the previous
-wallclock.  Tracks that hit the cap return with
+EMPIRICALLY TUNED: on the tracks used in development, legitimate
+convergence took at most 22 iterations on the simulated and
+cohort tracks, and 61 on a golden-eagle track with a block of
+spoofed fixes.  100 leaves a margin of ~39 iterations AND caps
+multi-state tracks that never converge at half the previous
+wall-clock time.  Tracks that hit the cap return with
 <code>convergence = "max_iterations"</code> – a visible signal the
 user can opt up via <code>max_iterations = 200L</code> (the previous
 default) or higher.  Plausible range: 50–500.</p></dd>
@@ -332,15 +329,15 @@ their magnitudes, and passes it to <code><a href="mt_peel_speed.html">mt_peel_sp
 higher-scoring endpoint per offending edge.</p>
 <p>The asymmetric mode is designed for tracks whose contamination
 is dominated by 1-fix spikes whose clean neighbours the
-symmetric default would peel along with the spike.  Empirical
-benchmark (synthetic CPF, audit 2026-05-11): mean F1 +0.036,
+symmetric default would peel along with the spike.  On the
+simulated CPF tracks: mean F1 +0.036,
 CPF_A F1 0.885 -&gt; 0.958, CPF_D F1 0.674 -&gt; 0.779, no losses.</p>
 <p><strong>Cluster-outlier caveat</strong>.  On coherent multi-fix
-contamination (sustained spoofs, deployment confusion blocks
-like the K02 benchmark) the asymmetric peel can walk inward
-from one boundary only or oscillate, producing false positives
-at the cluster boundary.  Empirical (K02 benchmark, audit
-2026-05-11): F1 0.776 (symmetric) -&gt; 0.572 (asymmetric).  Use
+contamination (sustained spoofs, deployment confusion blocks)
+the asymmetric peel can walk inward from one boundary only or
+oscillate, producing false positives at the cluster boundary.
+On a golden-eagle track with a spoofing episode: F1 0.776
+(symmetric) -&gt; 0.572 (asymmetric).  Use
 the default <code>"none"</code> on tracks with known cluster-shape
 contamination.  See also <code><a href="mt_peel_speed.html">mt_peel_speed</a></code> -&gt; Asymmetric
 peel.</p></dd>
@@ -791,8 +788,8 @@ absolute cap misses at sparse sampling; absolute <code>v_max</code>
 for (ii) anchors block expansion against true physiological
 impossibility.  Collapsing (i) and (ii) into a single
 user-overridable threshold reintroduces the over-flag failure
-mode documented in the 2026-04-29 stratified Movebank audit
-(homing pigeon racing flight over-flagged as anomaly relative
+mode found in development on Movebank data (a homing
+pigeon's racing flight over-flagged as anomaly relative
 to the resting baseline).  Users who specifically want the
 conjunction's speed flag to use the absolute cap should call
 <code><a href="mt_flag_speed_cap.html">mt_flag_speed_cap</a>(threshold_type = "hard",
@@ -826,21 +823,58 @@ annotation on cascade output (use the score with the
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/movebank_download_study.html" class="external-link">movebank_download_study</a></span><span class="op">(</span>study_id <span class="op">=</span> <span class="fl">123</span>, <span class="va">...</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_filter_gps_quality.html">mt_filter_gps_quality</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">move2</span><span class="fu">::</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_filter_unique.html" class="external-link">mt_filter_unique</a></span><span class="op">(</span><span class="va">x</span>, <span class="st">"first"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="va">x</span>, <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_time.html" class="external-link">mt_time</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## Default: return the cleaned track, ready for downstream analysis</span></span></span>
-<span class="r-in"><span><span class="va">x_clean</span> <span class="op">&lt;-</span> <span class="fu">mt_clean_track</span><span class="op">(</span><span class="va">x</span>, v_max <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## a simulated track with known errors, shipped with the package</span></span></span>
+<span class="r-in"><span><span class="va">tracks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/synthetic_tracks.csv.gz"</span>,</span></span>
+<span class="r-in"><span>                              package <span class="op">=</span> <span class="st">"move2utils"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">track</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">tracks</span>, .track_id <span class="op">=</span> <span class="st">"CPF_C"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## Default: return the cleaned track (and draw it)</span></span></span>
+<span class="r-in"><span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu">mt_clean_track</span><span class="op">(</span><span class="va">track</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> No physiological speed cap supplied -- running with a data-driven cap chosen from your track.  This works well for most cases.  If your animal has multiple behavioural states (e.g. perched and flying) or you expect sustained-spoof errors, supplying `v_max =` (a published top speed in m/s) or `(mass = ..., mode = ...)` for the allometric estimate gives sharper results.  See `?v_phys_estimate` for the allometric helper; `?mt_clean_track` documents the failure modes of the auto-cap in detail.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 1: bridge=4 prob=3 speed=0 detour=4 (v_max=-) | conjunction=3 | new=3 cumulative=3</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 2: bridge=1 prob=5 speed=3 detour=1 (v_max=2.5) | conjunction=1 | new=1 cumulative=4</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 3: bridge=0 prob=6 speed=0 detour=0 (v_max=-) | conjunction=0 | new=0 cumulative=4</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === mt_clean_track: 4 flagged (2.162% of 185); stopped: no_new_flags ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     Returning the cleaned track (181 rows). To inspect what was flagged, re-run with remove = FALSE.</span>
+<span class="r-plt img"><img src="mt_clean_track-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Inspection mode: keep all rows, see which were flagged and why</span></span></span>
-<span class="r-in"><span><span class="va">x_with_flags</span> <span class="op">&lt;-</span> <span class="fu">mt_clean_track</span><span class="op">(</span><span class="va">x</span>, v_max <span class="op">=</span> <span class="fl">50</span>, remove <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">x_with_flags</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">x_with_flags</span><span class="op">[</span><span class="va">x_with_flags</span><span class="op">$</span><span class="va">is_outlier</span>, <span class="op">]</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="va">flags</span> <span class="op">&lt;-</span> <span class="fu">mt_clean_track</span><span class="op">(</span><span class="va">track</span>, remove <span class="op">=</span> <span class="cn">FALSE</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> No physiological speed cap supplied -- running with a data-driven cap chosen from your track.  This works well for most cases.  If your animal has multiple behavioural states (e.g. perched and flying) or you expect sustained-spoof errors, supplying `v_max =` (a published top speed in m/s) or `(mass = ..., mode = ...)` for the allometric estimate gives sharper results.  See `?v_phys_estimate` for the allometric helper; `?mt_clean_track` documents the failure modes of the auto-cap in detail.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 1: bridge=4 prob=3 speed=0 detour=4 (v_max=-) | conjunction=3 | new=3 cumulative=3</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 2: bridge=1 prob=5 speed=3 detour=1 (v_max=2.5) | conjunction=1 | new=1 cumulative=4</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 3: bridge=0 prob=6 speed=0 detour=0 (v_max=-) | conjunction=0 | new=0 cumulative=4</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === mt_clean_track: 4 flagged (2.162% of 185); stopped: no_new_flags ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     Returning all rows with flag columns attached. To drop flagged rows, either re-run with remove = TRUE (the default) or subset: x[!x$is_outlier, ].</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">flags</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FALSE  TRUE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   181     4 </span>
+<span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">flags</span><span class="op">[</span><span class="va">flags</span><span class="op">$</span><span class="va">is_outlier</span>, <span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A <span style="color: #0000BB;">&lt;move2&gt;</span> with `track_id_column` <span style="color: #0000BB;">"individual-local-identifier"</span> and `time_column` <span style="color: #0000BB;">"timestamp"</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Containing 1 track lasting 2.09 days in a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 4 features and 22 fields</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: POINT</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: 11.29039 ymin: 47.39112 xmax: 11.66128 ymax: 47.64956</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Geodetic CRS:  WGS 84</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 23</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   timestamp           `ground-speed` heading `gps:satellite-count` `gps:dop`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">*</span> <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>                       <span style="color: #949494;">[m/s]</span>     <span style="color: #949494;">[°]</span>               <span style="color: #949494;">[count]</span>       <span style="color: #949494;">[1]</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 2025-07-01 <span style="color: #949494;">16:59:41</span>           20.8     173                     9       3.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 2025-07-02 <span style="color: #949494;">13:14:42</span>           13.3     312                     8       2.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2025-07-03 <span style="color: #949494;">01:15:13</span>           12.4     143                     5       1.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 2025-07-03 <span style="color: #949494;">19:15:05</span>           11.0      28                     5       2.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 18 more variables: `individual-local-identifier` &lt;fct&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   `sensor-type` &lt;fct&gt;, state &lt;chr&gt;, geometry &lt;POINT [°]&gt;, is_outlier &lt;lgl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   flagged_by_bridge &lt;lgl&gt;, flagged_by_prob &lt;lgl&gt;, flagged_by_speed &lt;lgl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   flagged_by_detour &lt;lgl&gt;, flag_iteration &lt;int&gt;, block_id &lt;int&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   error_class &lt;chr&gt;, error_classes_all &lt;chr&gt;, combined_evidence &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   loglr_bridge &lt;dbl&gt;, loglr_prob &lt;dbl&gt;, loglr_speed &lt;dbl&gt;, loglr_detour &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Track features:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   individual-local-identifier</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                       CPF_C</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

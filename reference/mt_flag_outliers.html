@@ -13,7 +13,7 @@ joint space are flagged as potential outliers."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -324,7 +324,7 @@ turning angle), <code>joint_prob</code> (product of all three),
 <code>loglr_prob</code> (signed log-likelihood-ratio of outlier vs not, in
 nat units; <code>&gt; 0</code> where flagged, <code>&lt; 0</code> below the boundary,
 <code>NA</code> where the detector abstains – see
-<code>DESIGN_evidence_accumulation.md</code>),
+<code><a href="mt_flag_consensus.html">mt_flag_consensus</a></code>),
 <code>is_outlier</code> (logical flag), <code>flagged_by_prob</code> (logical,
 same as <code>is_outlier</code> for this primitive – named for parity with
 the other primitives so the output can be voted by
@@ -381,47 +381,247 @@ Methods in Ecology and Evolution. <a href="https://doi.org/10.64898/2026.07.11.7
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## load example data</span></span></span>
 <span class="r-in"><span><span class="va">fishers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_example.html" class="external-link">mt_example</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fishers</span> <span class="op">&lt;-</span> <span class="va">fishers</span><span class="op">[</span><span class="op">!</span><span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_query.html" class="external-link">st_is_empty</a></span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span>, <span class="op">]</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## flag outliers per individual (automatic when multiple IDs present)</span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## a single individual: Leroy (M1)</span></span></span>
+<span class="r-in"><span><span class="va">leroy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">fishers</span>, .track_id <span class="op">=</span> <span class="st">"M1"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">leroy</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.255 (r_speed=0.581, r_angvel=0.112)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 6 outliers (0.65% of 919) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Creating diagnostic plot...</span>
+<span class="r-plt img"><img src="mt_flag_outliers-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FALSE  TRUE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   913     6 </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## remove outliers, single individual</span></span></span>
-<span class="r-in"><span><span class="va">leroy</span> <span class="op">&lt;-</span> <span class="va">fishers</span><span class="op">[</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_track_id.html" class="external-link">mt_track_id</a></span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span> <span class="op">==</span> <span class="st">"M4"</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span><span class="co">## remove outliers</span></span></span>
 <span class="r-in"><span><span class="va">cleaned</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">leroy</span>, remove <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.255 (r_speed=0.581, r_angvel=0.112)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 6 outliers (0.65% of 919) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Creating diagnostic plot...</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## copula method (faster, works well with small samples)</span></span></span>
 <span class="r-in"><span><span class="va">result_cop</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">leroy</span>, method <span class="op">=</span> <span class="st">"copula"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## pooled reference: score against distribution from all individuals</span></span></span>
-<span class="r-in"><span><span class="va">result_pop</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">fishers</span>, reference <span class="op">=</span> <span class="va">fishers</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## default: ACF-derived alpha (adapts to the data)</span></span></span>
-<span class="r-in"><span><span class="va">result_acf</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">leroy</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.255 (r_speed=0.581, r_angvel=0.112)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 6 outliers (0.65% of 919) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Creating diagnostic plot...</span>
+<span class="r-plt img"><img src="mt_flag_outliers-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## manual override: ignore auto-differences</span></span></span>
 <span class="r-in"><span><span class="va">result_a0</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">leroy</span>, autodiff_alpha <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 5 outliers (0.54% of 919) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Creating diagnostic plot...</span>
+<span class="r-plt img"><img src="mt_flag_outliers-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## manual override: full product (no downweighting)</span></span></span>
 <span class="r-in"><span><span class="va">result_a1</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">leroy</span>, autodiff_alpha <span class="op">=</span> <span class="fl">1.0</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 10 outliers (1.09% of 919) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Creating diagnostic plot...</span>
+<span class="r-plt img"><img src="mt_flag_outliers-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## iterative refinement for consecutive outliers</span></span></span>
 <span class="r-in"><span><span class="va">result_iter</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">leroy</span>, iterations <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## quality weighting with satellite count and HDOP</span></span></span>
-<span class="r-in"><span><span class="va">result_qc</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">leroy</span>, quality_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="st">"gps.satellite.count"</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">s</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">pnorm</a></span><span class="op">(</span><span class="va">s</span>, mean <span class="op">=</span> <span class="fl">7</span>, sd <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  <span class="st">"gps.hdop"</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">h</span><span class="op">)</span> <span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">pnorm</a></span><span class="op">(</span><span class="va">h</span>, mean <span class="op">=</span> <span class="fl">3</span>, sd <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- Iteration 1 of 3 ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.255 (r_speed=0.581, r_angvel=0.112)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 6 outliers (0.65% of 919) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Flagged 6 new outliers (total: 6).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- Iteration 2 of 3 ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.263 (r_speed=0.602, r_angvel=0.115)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 13 outliers (1.42% of 913) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Flagged 13 new outliers (total: 19).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- Iteration 3 of 3 ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.261 (r_speed=0.589, r_angvel=0.116)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 3 outliers (0.33% of 900) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Flagged 3 new outliers (total: 22).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.255 (r_speed=0.581, r_angvel=0.112)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 6 outliers (0.65% of 919) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iterative total: 22 outliers (2.40% of 916 locations) based on Joint probability.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Creating diagnostic plot...</span>
+<span class="r-plt img"><img src="mt_flag_outliers-5.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## raw step/turn metrics (without time normalisation)</span></span></span>
 <span class="r-in"><span><span class="va">result_raw</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">leroy</span>, time_normalize <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.224 (r_speed=0.435, r_angvel=0.116)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Note: gap-aware scaling is NOT in force for the step auto-difference (gap distribution yields only 1 distinct quantile break(s); need 3 (a strictly two-valued duty cycle can land here depending on its mixing proportion));</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   the scale is constant, so autodifferences are not gap-normalised.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Note: gap-aware scaling is NOT in force for the turning-angle auto-difference (gap distribution yields only 1 distinct quantile break(s); need 3 (a strictly two-valued duty cycle can land here depending on its mixing proportion));</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   the scale is constant, so autodifferences are not gap-normalised.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 2 outliers (0.22% of 919) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Creating diagnostic plot...</span>
+<span class="r-plt img"><img src="mt_flag_outliers-6.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## quality weighting with satellite count and DOP, on data that carry them</span></span></span>
+<span class="r-in"><span><span class="va">tracks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/synthetic_tracks.csv.gz"</span>,</span></span>
+<span class="r-in"><span>                              package <span class="op">=</span> <span class="st">"move2utils"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">track</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">tracks</span>, .track_id <span class="op">=</span> <span class="st">"CPF_C"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">result_qc</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">track</span>, quality_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"gps:satellite-count"</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">s</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">pnorm</a></span><span class="op">(</span><span class="va">s</span>, mean <span class="op">=</span> <span class="fl">7</span>, sd <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"gps:dop"</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">h</span><span class="op">)</span> <span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">pnorm</a></span><span class="op">(</span><span class="va">h</span>, mean <span class="op">=</span> <span class="fl">3</span>, sd <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.053 (r_speed=0.477, r_angvel=0.006)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (1.6%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 3 outliers (1.62% of 185) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Creating diagnostic plot...</span>
+<span class="r-plt img"><img src="mt_flag_outliers-7.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## per individual (automatic when several IDs are present), here three</span></span></span>
+<span class="r-in"><span><span class="va">three</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">fishers</span>, .track_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"F1"</span>, <span class="st">"M1"</span>, <span class="st">"M2"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">result_all</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">three</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Processing 3 individuals separately...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- F1 (1349 locations) ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.287 (r_speed=0.586, r_angvel=0.141)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.2%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 4 outliers (0.30% of 1349) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- M1 (919 locations) ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.255 (r_speed=0.581, r_angvel=0.112)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 6 outliers (0.65% of 919) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- M2 (1638 locations) ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.231 (r_speed=0.557, r_angvel=0.096)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.2%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 6 outliers (0.37% of 1638) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Creating diagnostic plot...</span>
+<span class="r-plt img"><img src="mt_flag_outliers-8.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## pooled reference: score against the distribution from all three</span></span></span>
+<span class="r-in"><span><span class="va">result_pop</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_outliers</span><span class="op">(</span><span class="va">three</span>, reference <span class="op">=</span> <span class="va">three</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Building distributions from reference data...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Processing 3 individuals separately...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- F1 (1349 locations) ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.287 (r_speed=0.586, r_angvel=0.141)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Building distributions from supplied reference data...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.2%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 5 outliers (0.37% of 1349) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- M1 (919 locations) ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.255 (r_speed=0.581, r_angvel=0.112)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Building distributions from supplied reference data...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.3%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 12 outliers (1.31% of 919) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- M2 (1638 locations) ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating movement metrics...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ACF-derived alpha: 0.231 (r_speed=0.557, r_angvel=0.096)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Building distributions from supplied reference data...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating probability distributions...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating joint probabilities...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Identifying outliers...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 3 locations (0.2%) have NA probabilities --will be kept.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 22 outliers (1.34% of 1638) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Creating diagnostic plot...</span>
+<span class="r-plt img"><img src="mt_flag_outliers-9.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

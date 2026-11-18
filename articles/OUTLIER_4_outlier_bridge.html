@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -212,7 +212,7 @@ CPF_A has 23 injected outliers, CPF_B is clean, and CPF_C has 4.</p>
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_flag_outliers_bridge.html">mt_flag_outliers_bridge</a></span><span class="op">(</span><span class="va">cpfA_p</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running bridge-residual detection (method = combined) on 1748 locations...</span></span>
 <span><span class="co">#&gt;   Iter 1: flagged 6 (break at eta = 1591.91 / eta_perp = 406.83).</span></span>
-<span><span class="co">#&gt;   Iter 2: flagged 4 (break at eta = 1472.59 / eta_perp = 1181.90).</span></span>
+<span><span class="co">#&gt;   Iter 2: flagged 4 (break at eta = 1428.24 / eta_perp = 1227.59).</span></span>
 <span><span class="co">#&gt;   Iter 3: flagged 7 (break at eta = 1255.69 / eta_perp = 1021.41).</span></span>
 <span><span class="co">#&gt; === 17 outliers (0.97% of 1748) ===</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span></span>
@@ -314,9 +314,9 @@ already be clean.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running bridge-residual detection (method = directional) on 1748 locations...</span></span>
 <span><span class="co">#&gt;   Iter 1: flagged 5 (break at eta_perp = 406.83).</span></span>
-<span><span class="co">#&gt;   Iter 2: flagged 2 (break at eta_perp = 1181.72).</span></span>
-<span><span class="co">#&gt;   Iter 3: flagged 3 (break at eta_perp = 1021.47).</span></span>
-<span><span class="co">#&gt; === 10 outliers (0.57% of 1748) ===</span></span>
+<span><span class="co">#&gt;   Iter 2: flagged 5 (break at eta_perp = 56.83).</span></span>
+<span><span class="co">#&gt;   Iter 3: flagged 3 (break at eta_perp = 679.58).</span></span>
+<span><span class="co">#&gt; === 13 outliers (0.74% of 1748) ===</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"bridge"</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">res_d</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "bridge_residual"      "bridge_width"         "bridge_eta"          </span></span>
 <span><span class="co">#&gt;  [4] "bridge_eta_para"      "bridge_eta_perp"      "bridge_obs_inflation"</span></span>

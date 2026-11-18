@@ -19,7 +19,7 @@ knowledge if the suggested value disagrees with species biology."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -178,8 +178,9 @@ invisibly when <code>plot = TRUE</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>K02-style spoof-boundary transitions produce speeds that sit in a
-yawning gap above the bulk of the distribution: on that track,
+    <p>The boundaries of a GPS-spoofing episode produce speeds that sit in a
+yawning gap above the bulk of the distribution: on one golden-eagle
+track with such an episode,
 99.99\<!-- % of steps are below 32 m/s and the tail jumps directly to -->
 209 m/s with nothing in between.  Any reasonable break-detector
 places the suggested cap in that gap.  When no such gap exists
@@ -204,13 +205,52 @@ multi-state tracks (the "rest vs flight" failure mode).</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## a simulated track with known errors, shipped with the package</span></span></span>
+<span class="r-in"><span><span class="va">tracks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/synthetic_tracks.csv.gz"</span>,</span></span>
+<span class="r-in"><span>                              package <span class="op">=</span> <span class="st">"move2utils"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">track</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">tracks</span>, .track_id <span class="op">=</span> <span class="st">"CPF_C"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">v</span> <span class="op">&lt;-</span> <span class="fu">mt_suggest_speed_cap</span><span class="op">(</span><span class="va">track</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Step-speed quantiles (m/s):</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>      50% :    0.21</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>      90% :    0.43</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>      99% :   14.26</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>    99.9% :   20.47</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   99.99% :   20.81</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     100% :   20.85</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Speed-cap auto gate: the data-driven break at 2.46 m/s sits below the rightmost substantive mode at 12.40 m/s -- the cap is separating activity modes (rest vs movement), not outliers from valid movement.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   For a fast-moving species, supply a physiological cap via:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>       mt_flag_speed_cap(x, v_max = &lt;species top speed, m/s&gt;, threshold_type = "hard")</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Or pass (mass, mode) to mt_clean_track for an allometric prior.  Proceeding with no auto cap (v_max = Inf).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Congruence: entropy raw = 2.46 m/s vs gap raw = 12.41 m/s -- disagreement 5.0 x (gates not applied).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Large disagreement indicates multi-scale tail structure (e.g. coherent outlier cluster plus extreme singletons).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Inspect the speed ECDF and consider both candidates when choosing v_max.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> No structural break detected (method = auto). The distribution appears unimodal; no outlier-like tail. If you still want a cap, set it from species biology.</span>
+<span class="r-plt img"><img src="mt_suggest_speed_cap-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">v</span><span class="op">)</span><span class="op">)</span> <span class="va">track</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_flag_speed_cap.html">mt_flag_speed_cap</a></span><span class="op">(</span><span class="va">track</span>, v_max <span class="op">=</span> <span class="va">v</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## triangulate empirical, allometric and user estimates:</span></span></span>
 <span class="r-in"><span><span class="fu">mt_suggest_speed_cap</span><span class="op">(</span><span class="va">track</span>, mass <span class="op">=</span> <span class="fl">5</span>, mode <span class="op">=</span> <span class="st">"flying"</span>, v_max <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Step-speed quantiles (m/s):</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>      50% :    0.21</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>      90% :    0.43</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>      99% :   14.26</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>    99.9% :   20.47</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   99.99% :   20.81</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     100% :   20.85</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Speed-cap auto gate: the data-driven break at 2.46 m/s sits below the rightmost substantive mode at 12.40 m/s -- the cap is separating activity modes (rest vs movement), not outliers from valid movement.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   For a fast-moving species, supply a physiological cap via:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>       mt_flag_speed_cap(x, v_max = &lt;species top speed, m/s&gt;, threshold_type = "hard")</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Or pass (mass, mode) to mt_clean_track for an allometric prior.  Proceeding with no auto cap (v_max = Inf).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Congruence: entropy raw = 2.46 m/s vs gap raw = 12.41 m/s -- disagreement 5.0 x (gates not applied).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Large disagreement indicates multi-scale tail structure (e.g. coherent outlier cluster plus extreme singletons).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Inspect the speed ECDF and consider both candidates when choosing v_max.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> No structural break detected (method = auto). The distribution appears unimodal; no outlier-like tail. If you still want a cap, set it from species biology.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Triangulation:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   allometric (Hirt 2017, flying   mass=5 kg): 30.89 m/s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   user-supplied v_max                        : 30.00 m/s</span>
+<span class="r-plt img"><img src="mt_suggest_speed_cap-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

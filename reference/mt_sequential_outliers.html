@@ -11,7 +11,7 @@ probability (Equation 1) used by mt_flag_outliers."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -226,8 +226,9 @@ algorithm used a single threshold calibrated on the full formula;
 on multi-state tracks where the autodifference KDE returned very
 large densities at the bimodal Delta-step peaks, the full-formula
 threshold sat orders of magnitude above typical partial-formula
-first-step scores and the scan flagged ~all fixes (WH17 over-flag
-at 99.99\<!-- %).  Post-fix on WH17 the flag rate drops to ~1.4\\%; on -->
+first-step scores and the scan flagged ~all fixes (99.99\<!-- % on a -->
+Bonelli's eagle track).  With two thresholds that track's flag rate
+drops to ~1.4\<!-- %; on -->
 single-state synthetic CPF tracks the two thresholds happen to
 agree numerically and the per-fix flag set is byte-identical.
 User-supplied <code>threshold = X</code> sets both thresholds to
@@ -235,7 +236,7 @@ User-supplied <code>threshold = X</code> sets both thresholds to
 <p>The 0.5\<!-- %-percentile heuristic remains the calibration target; -->
 a per-fix p-value-based threshold (parametric null on the
 reference log-probability) is the natural improvement direction
-but is deferred (see <code>FUTURE_IMPROVEMENTS.md</code> M-12).</p>
+but is not yet implemented.</p>
 <p>Documented workflow recommendations remain unchanged: on heavily
 contaminated multi-state tracks, supply a clean
 <code>reference =</code> object, or use <code><a href="mt_flag_outliers.html">mt_flag_outliers</a></code>
@@ -266,11 +267,20 @@ this one).</p></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## a simulated track with known errors, shipped with the package</span></span></span>
+<span class="r-in"><span><span class="va">tracks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/synthetic_tracks.csv.gz"</span>,</span></span>
+<span class="r-in"><span>                              package <span class="op">=</span> <span class="st">"move2utils"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">track</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">tracks</span>, .track_id <span class="op">=</span> <span class="st">"CPF_C"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co">## Forward-backward scan from the track endpoints:</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">mt_sequential_outliers</span><span class="op">(</span><span class="va">track</span>, scan <span class="op">=</span> <span class="st">"forward-backward"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Building probability surfaces...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Sequential scan (forward-backward): threshold_partial = 0.0002384, threshold_full = 4.808e-06</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Sequential scan: flagged 2 outliers (1.08% of 185 locations).</span>
 <span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">seq_joint_prob</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 0.00000 0.01139 0.01754 0.01731 0.02233 0.04083 </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

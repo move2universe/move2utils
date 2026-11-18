@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -209,8 +209,8 @@ comparable.</p>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">var_list</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "F1__night" "F1__day"   "F2__day"   "F2__night" "M1__day"   "M1__night"</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">stk</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_dbbmm_ud.html">mt_dbbmm_ud</a></span><span class="op">(</span><span class="va">var_list</span>, location_error <span class="op">=</span> <span class="fl">25</span>, raster <span class="op">=</span> <span class="fl">100</span>,</span>
-<span>                    ext <span class="op">=</span> <span class="fl">0.85</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">stk</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_dbbmm_ud.html">mt_dbbmm_ud</a></span><span class="op">(</span><span class="va">var_list</span>, location_error <span class="op">=</span> <span class="fl">25</span>, res <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                    ext_factor <span class="op">=</span> <span class="fl">0.85</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">stk</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "F1__night" "F1__day"   "F2__day"   "F2__night" "M1__day"   "M1__night"</span></span>
 <span><span class="va">vud</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ud_volume.html">ud_volume</a></span><span class="op">(</span><span class="va">stk</span><span class="op">)</span></span>
@@ -244,39 +244,40 @@ full workflow.</p></li>
 <li><p><strong>Common-grid discipline.</strong> If you compare bursts
 visually or metrically (e.g. overlap), the multi-track dispatch already
 puts all layers on the same grid. If you mix outputs from separate
-dispatches, pass a pre-made <code>SpatRaster</code> to each
-call.</p></li>
+dispatches, pass the same <code>SpatRaster</code> template to each call.
+A template is never enlarged: take it from a list-method result (as in
+Idiom B below), or extend it with the <code><a href="https://rspatial.github.io/terra/reference/extend.html" class="external-link">terra::extend()</a></code> call
+that the error message gives.</p></li>
 </ul>
 </div>
 </div>
 <div class="section level2">
 <h2 id="idiom-b-split-and-lapply">Idiom B — <code>split()</code> and <code>lapply()</code><a class="anchor" aria-label="anchor" href="#idiom-b-split-and-lapply"></a>
 </h2>
-<p>When each burst needs its own grid, resolution, or parameters, split
-the object explicitly and iterate.</p>
+<p>When each burst needs its own variance parameters, split the object
+explicitly and fit each burst on its own. Passing the list of variance
+objects to <code><a href="../reference/mt_dbbmm_ud.html">mt_dbbmm_ud()</a></code> then puts them on one common grid,
+large enough for all of them.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">bursts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">focal</span>, <span class="fu"><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction</a></span><span class="op">(</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_track_id.html" class="external-link">mt_track_id</a></span><span class="op">(</span><span class="va">focal</span><span class="op">)</span>,</span>
-<span>                                       <span class="va">focal</span><span class="op">$</span><span class="va">day_night</span>,</span>
-<span>                                       drop <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co">## project once, so that every burst shares one coordinate system</span></span>
+<span><span class="va">focal_p</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">focal</span>, <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_aeqd_crs.html" class="external-link">mt_aeqd_crs</a></span><span class="op">(</span><span class="va">focal</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">bursts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">focal_p</span>, <span class="fu"><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction</a></span><span class="op">(</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_track_id.html" class="external-link">mt_track_id</a></span><span class="op">(</span><span class="va">focal_p</span><span class="op">)</span>,</span>
+<span>                                     <span class="va">focal_p</span><span class="op">$</span><span class="va">day_night</span>,</span>
+<span>                                     drop <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">bursts</span> <span class="op">&lt;-</span> <span class="va">bursts</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">bursts</span>, <span class="va">nrow</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="fl">60</span><span class="op">]</span>  <span class="co"># drop sparse bursts</span></span>
 <span></span>
 <span><span class="va">var_each</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">bursts</span>, <span class="va">mt_dbbmm_variance</span>,</span>
-<span>                    location_error <span class="op">=</span> <span class="fl">25</span>,</span>
-<span>                    window_size    <span class="op">=</span> <span class="fl">31</span>,</span>
-<span>                    margin         <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span>
+<span>                   location_error <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>                   window_size    <span class="op">=</span> <span class="fl">31</span>,</span>
+<span>                   margin         <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">## compute each UD on a common grid so they remain stackable</span></span>
-<span><span class="va">all_xy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">var_each</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">v</span><span class="op">$</span><span class="va">track_data</span><span class="op">$</span><span class="va">x</span>, y <span class="op">=</span> <span class="va">v</span><span class="op">$</span><span class="va">track_data</span><span class="op">$</span><span class="va">y</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">pts</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span><span class="va">all_xy</span>, coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>,</span>
-<span>                     crs <span class="op">=</span> <span class="va">var_each</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">track_data</span><span class="op">$</span><span class="va">crs</span><span class="op">)</span></span>
-<span><span class="va">grid</span> <span class="op">&lt;-</span> <span class="fu">move2utils</span><span class="fu">:::</span><span class="fu"><a href="../reference/dot-make_raster.html">.make_raster</a></span><span class="op">(</span><span class="va">pts</span>, cell_size <span class="op">=</span> <span class="fl">100</span>, ext <span class="op">=</span> <span class="fl">0.85</span><span class="op">)</span></span>
+<span><span class="co">## the list method puts every burst on one grid, large enough for all,</span></span>
+<span><span class="co">## so the layers remain stackable</span></span>
+<span><span class="va">stk_b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_dbbmm_ud.html">mt_dbbmm_ud</a></span><span class="op">(</span><span class="va">var_each</span>, location_error <span class="op">=</span> <span class="fl">25</span>, res <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                     verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">ud_each</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">var_each</span>, <span class="va">mt_dbbmm_ud</span>,</span>
-<span>                   location_error <span class="op">=</span> <span class="fl">25</span>, raster <span class="op">=</span> <span class="va">grid</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">stk_b</span> <span class="op">&lt;-</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/rast.html" class="external-link">rast</a></span><span class="op">(</span><span class="va">ud_each</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">stk_b</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">bursts</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">## any layer is then a template for later UDs on the same grid</span></span>
+<span><span class="va">grid</span> <span class="op">&lt;-</span> <span class="va">stk_b</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <p>This pattern is also what you want when the context implies genuinely
 different <code>location_error</code> or <code>window_size</code> per
 burst — for example a tag that switched duty cycle mid-study.</p>
@@ -294,7 +295,7 @@ Consider a commuting animal where day-time movement is foraging
 <code class="sourceCode R"><span><span class="va">var_list_d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_dbgb_variance.html">mt_dbgb_variance</a></span><span class="op">(</span><span class="va">focal_burst</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>                                 window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span>
 <span><span class="va">stk_d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_dbgb_ud.html">mt_dbgb_ud</a></span><span class="op">(</span><span class="va">var_list_d</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span>
-<span>                     raster <span class="op">=</span> <span class="fl">100</span>, ext <span class="op">=</span> <span class="fl">0.85</span><span class="op">)</span></span></code></pre></div>
+<span>                     res <span class="op">=</span> <span class="fl">100</span>, ext_factor <span class="op">=</span> <span class="fl">0.85</span><span class="op">)</span></span></code></pre></div>
 <p>Contrast the parallel/perpendicular ratios across bursts via
 <code><a href="../reference/mt_motion_variance.html">mt_motion_variance()</a></code> on each list element — the ratio is
 the diagnostic signal that dBGB adds on top of dBBMM.</p>

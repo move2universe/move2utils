@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -140,7 +140,7 @@ comparison makes the point:</p>
 <code class="sourceCode R"><span><span class="va">r_tn</span>  <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_flag_outliers.html">mt_flag_outliers</a></span><span class="op">(</span><span class="va">Leo</span>, time_normalize <span class="op">=</span> <span class="cn">TRUE</span>,  plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span></span>
 <span><span class="co">#&gt; Calculating movement metrics...</span></span>
-<span><span class="co">#&gt; ACF-derived alpha: 0.263 (r_speed=0.822, r_angvel=0.084)</span></span>
+<span><span class="co">#&gt; ACF-derived alpha: 0.260 (r_speed=0.822, r_angvel=0.082)</span></span>
 <span><span class="co">#&gt; Calculating probability distributions...</span></span>
 <span><span class="co">#&gt; Note: gap-aware scaling is NOT in force for the step auto-difference (gap distribution yields only 2 distinct quantile break(s); need 3 (a strictly two-valued duty cycle can land here depending on its mixing proportion));</span></span>
 <span><span class="co">#&gt;   the scale is constant, so autodifferences are not gap-normalised.</span></span>
@@ -150,11 +150,11 @@ comparison makes the point:</p>
 <span><span class="co">#&gt; Identifying outliers...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 3 locations (0.0%) have NA probabilities (includes 7001 stationary fixes) --will be kept.</span></span>
-<span><span class="co">#&gt; === 9 outliers (0.03% of 35256) ===</span></span>
+<span><span class="co">#&gt; === 37 outliers (0.10% of 35256) ===</span></span>
 <span><span class="va">r_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_flag_outliers.html">mt_flag_outliers</a></span><span class="op">(</span><span class="va">Leo</span>, time_normalize <span class="op">=</span> <span class="cn">FALSE</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span></span>
 <span><span class="co">#&gt; Calculating movement metrics...</span></span>
-<span><span class="co">#&gt; ACF-derived alpha: 0.095 (r_speed=0.110, r_angvel=0.083)</span></span>
+<span><span class="co">#&gt; ACF-derived alpha: 0.094 (r_speed=0.110, r_angvel=0.081)</span></span>
 <span><span class="co">#&gt; Calculating probability distributions...</span></span>
 <span><span class="co">#&gt; Note: gap-aware scaling is NOT in force for the step auto-difference (gap distribution yields only 1 distinct quantile break(s); need 3 (a strictly two-valued duty cycle can land here depending on its mixing proportion));</span></span>
 <span><span class="co">#&gt;   the scale is constant, so autodifferences are not gap-normalised.</span></span>
@@ -170,12 +170,12 @@ comparison makes the point:</p>
 <span><span class="co">#&gt; Identifying outliers...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 3 locations (0.0%) have NA probabilities (includes 7001 stationary fixes) --will be kept.</span></span>
-<span><span class="co">#&gt; === 267 outliers (0.76% of 35256) ===</span></span>
+<span><span class="co">#&gt; === 100 outliers (0.28% of 35256) ===</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"With elapsed-time normalisation:   "</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r_tn</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span>, <span class="st">"outliers\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; With elapsed-time normalisation:    9 outliers</span></span>
+<span><span class="co">#&gt; With elapsed-time normalisation:    37 outliers</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Without elapsed-time normalisation:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r_raw</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span>, <span class="st">"outliers\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Without elapsed-time normalisation: 267 outliers</span></span></code></pre></div>
+<span><span class="co">#&gt; Without elapsed-time normalisation: 100 outliers</span></span></code></pre></div>
 <p>Almost all of the extra “outliers” in the second run are false
 alarms: ordinary migratory movements that only look extreme because the
 raw step length ignores the days that elapsed. This is why
@@ -189,7 +189,7 @@ data.</p>
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_flag_outliers.html">mt_flag_outliers</a></span><span class="op">(</span><span class="va">Leo</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean prob math; output is returned in the original CRS.</span></span>
 <span><span class="co">#&gt; Calculating movement metrics...</span></span>
-<span><span class="co">#&gt; ACF-derived alpha: 0.263 (r_speed=0.822, r_angvel=0.084)</span></span>
+<span><span class="co">#&gt; ACF-derived alpha: 0.260 (r_speed=0.822, r_angvel=0.082)</span></span>
 <span><span class="co">#&gt; Calculating probability distributions...</span></span>
 <span><span class="co">#&gt; Note: gap-aware scaling is NOT in force for the step auto-difference (gap distribution yields only 2 distinct quantile break(s); need 3 (a strictly two-valued duty cycle can land here depending on its mixing proportion));</span></span>
 <span><span class="co">#&gt;   the scale is constant, so autodifferences are not gap-normalised.</span></span>
@@ -199,7 +199,7 @@ data.</p>
 <span><span class="co">#&gt; Identifying outliers...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 3 locations (0.0%) have NA probabilities (includes 7001 stationary fixes) --will be kept.</span></span>
-<span><span class="co">#&gt; === 9 outliers (0.03% of 35256) ===</span></span>
+<span><span class="co">#&gt; === 37 outliers (0.10% of 35256) ===</span></span>
 <span><span class="co">#&gt; Creating diagnostic plot...</span></span></code></pre></div>
 <p><img src="OUTLIER_example_leo_migration_files/figure-html/default-1.png" class="r-plt" alt="" width="960"></p>
 <p>With elapsed-time normalisation and the default gap-based threshold,
@@ -234,63 +234,74 @@ other checks run on what survives.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_clean_track.html">mt_clean_track</a></span><span class="op">(</span><span class="va">Leo</span>, v_max <span class="op">=</span> <span class="fl">25</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Speed peel (pre-step) at v_max = 25 m/s: 4 fix(es) removed in 1 iteration(s).</span></span>
-<span><span class="co">#&gt; Iter 1: bridge=13447 prob=11 speed=0 detour=3127 (v_max=25.0) | conjunction=438 | new=438 cumulative=442</span></span>
-<span><span class="co">#&gt; Iter 2: bridge=10235 prob=35 speed=0 detour=2687 (v_max=25.0) | conjunction=59 | new=59 cumulative=501</span></span>
-<span><span class="co">#&gt; Iter 3: bridge=10172 prob=20 speed=0 detour=2661 (v_max=25.0) | conjunction=19 | new=19 cumulative=520</span></span>
-<span><span class="co">#&gt; Iter 4: bridge=10159 prob=22 speed=0 detour=2658 (v_max=25.0) | conjunction=14 | new=14 cumulative=534</span></span>
-<span><span class="co">#&gt; Iter 5: bridge=10152 prob=13 speed=0 detour=2656 (v_max=25.0) | conjunction=7 | new=7 cumulative=541</span></span>
-<span><span class="co">#&gt; Iter 6: bridge=10166 prob=6 speed=0 detour=2656 (v_max=25.0) | conjunction=4 | new=4 cumulative=545</span></span>
-<span><span class="co">#&gt; Iter 7: bridge=10161 prob=11 speed=0 detour=2656 (v_max=25.0) | conjunction=7 | new=7 cumulative=552</span></span>
-<span><span class="co">#&gt; Iter 8: bridge=10162 prob=12 speed=0 detour=2656 (v_max=25.0) | conjunction=6 | new=6 cumulative=558</span></span>
-<span><span class="co">#&gt; Iter 9: bridge=10138 prob=15 speed=0 detour=2656 (v_max=25.0) | conjunction=12 | new=12 cumulative=570</span></span>
-<span><span class="co">#&gt; Iter 10: bridge=10134 prob=17 speed=0 detour=2656 (v_max=25.0) | conjunction=12 | new=12 cumulative=582</span></span>
-<span><span class="co">#&gt; Iter 11: bridge=10155 prob=25 speed=0 detour=2656 (v_max=25.0) | conjunction=18 | new=18 cumulative=600</span></span>
-<span><span class="co">#&gt; Iter 12: bridge=10139 prob=40 speed=0 detour=2656 (v_max=25.0) | conjunction=33 | new=33 cumulative=633</span></span>
-<span><span class="co">#&gt; Iter 13: bridge=10071 prob=40 speed=0 detour=2656 (v_max=25.0) | conjunction=33 | new=33 cumulative=666</span></span>
-<span><span class="co">#&gt; Iter 14: bridge=10085 prob=15 speed=0 detour=2656 (v_max=25.0) | conjunction=14 | new=14 cumulative=680</span></span>
-<span><span class="co">#&gt; Iter 15: bridge=10080 prob=18 speed=0 detour=2655 (v_max=25.0) | conjunction=10 | new=10 cumulative=690</span></span>
-<span><span class="co">#&gt; Iter 16: bridge=10076 prob=26 speed=0 detour=2655 (v_max=25.0) | conjunction=21 | new=21 cumulative=711</span></span>
-<span><span class="co">#&gt; Iter 17: bridge=10059 prob=19 speed=0 detour=2655 (v_max=25.0) | conjunction=14 | new=14 cumulative=725</span></span>
-<span><span class="co">#&gt; Iter 18: bridge=10056 prob=13 speed=0 detour=2655 (v_max=25.0) | conjunction=12 | new=12 cumulative=737</span></span>
-<span><span class="co">#&gt; Iter 19: bridge=10064 prob=41 speed=0 detour=2654 (v_max=25.0) | conjunction=31 | new=31 cumulative=768</span></span>
-<span><span class="co">#&gt; Iter 20: bridge=10058 prob=13 speed=0 detour=2654 (v_max=25.0) | conjunction=13 | new=13 cumulative=781</span></span>
-<span><span class="co">#&gt; Iter 21: bridge=10050 prob=25 speed=0 detour=2652 (v_max=25.0) | conjunction=20 | new=20 cumulative=801</span></span>
-<span><span class="co">#&gt; Iter 22: bridge=10034 prob=22 speed=0 detour=2651 (v_max=25.0) | conjunction=20 | new=20 cumulative=821</span></span>
-<span><span class="co">#&gt; Iter 23: bridge=10028 prob=14 speed=0 detour=2648 (v_max=25.0) | conjunction=13 | new=13 cumulative=834</span></span>
-<span><span class="co">#&gt; Iter 24: bridge=10023 prob=17 speed=0 detour=2647 (v_max=25.0) | conjunction=13 | new=13 cumulative=847</span></span>
-<span><span class="co">#&gt; Iter 25: bridge=10023 prob=30 speed=0 detour=2647 (v_max=25.0) | conjunction=29 | new=29 cumulative=876</span></span>
-<span><span class="co">#&gt; Iter 26: bridge=9976 prob=30 speed=0 detour=2645 (v_max=25.0) | conjunction=26 | new=26 cumulative=902</span></span>
-<span><span class="co">#&gt; Iter 27: bridge=9966 prob=18 speed=0 detour=2644 (v_max=25.0) | conjunction=17 | new=17 cumulative=919</span></span>
-<span><span class="co">#&gt; Iter 28: bridge=9950 prob=18 speed=0 detour=2643 (v_max=25.0) | conjunction=15 | new=15 cumulative=934</span></span>
-<span><span class="co">#&gt; Iter 29: bridge=9938 prob=12 speed=0 detour=2643 (v_max=25.0) | conjunction=11 | new=11 cumulative=945</span></span>
-<span><span class="co">#&gt; Iter 30: bridge=9959 prob=22 speed=0 detour=2643 (v_max=25.0) | conjunction=19 | new=19 cumulative=964</span></span>
-<span><span class="co">#&gt; Iter 31: bridge=9940 prob=9 speed=0 detour=2643 (v_max=25.0) | conjunction=9 | new=9 cumulative=973</span></span>
-<span><span class="co">#&gt; Iter 32: bridge=9935 prob=7 speed=0 detour=2642 (v_max=25.0) | conjunction=6 | new=6 cumulative=979</span></span>
-<span><span class="co">#&gt; Iter 33: bridge=9921 prob=10 speed=0 detour=2642 (v_max=25.0) | conjunction=6 | new=6 cumulative=985</span></span>
-<span><span class="co">#&gt; Iter 34: bridge=9922 prob=22 speed=0 detour=2642 (v_max=25.0) | conjunction=19 | new=19 cumulative=1004</span></span>
-<span><span class="co">#&gt; Iter 35: bridge=9915 prob=15 speed=0 detour=2642 (v_max=25.0) | conjunction=14 | new=14 cumulative=1018</span></span>
-<span><span class="co">#&gt; Iter 36: bridge=9914 prob=20 speed=0 detour=2641 (v_max=25.0) | conjunction=16 | new=16 cumulative=1034</span></span>
-<span><span class="co">#&gt; Iter 37: bridge=9879 prob=23 speed=0 detour=2641 (v_max=25.0) | conjunction=19 | new=19 cumulative=1053</span></span>
-<span><span class="co">#&gt; Iter 38: bridge=9892 prob=12 speed=0 detour=2641 (v_max=25.0) | conjunction=10 | new=10 cumulative=1063</span></span>
-<span><span class="co">#&gt; Iter 39: bridge=9829 prob=30 speed=0 detour=2640 (v_max=25.0) | conjunction=24 | new=24 cumulative=1087</span></span>
-<span><span class="co">#&gt; Iter 40: bridge=9843 prob=25 speed=0 detour=2639 (v_max=25.0) | conjunction=24 | new=24 cumulative=1111</span></span>
-<span><span class="co">#&gt; Iter 41: bridge=9887 prob=3 speed=0 detour=2635 (v_max=25.0) | conjunction=4 | new=4 cumulative=1115</span></span>
-<span><span class="co">#&gt; Iter 42: bridge=9828 prob=10 speed=0 detour=2632 (v_max=25.0) | conjunction=7 | new=7 cumulative=1122</span></span>
-<span><span class="co">#&gt; Iter 43: bridge=9825 prob=10 speed=0 detour=2632 (v_max=25.0) | conjunction=9 | new=9 cumulative=1131</span></span>
-<span><span class="co">#&gt; Iter 44: bridge=9824 prob=11 speed=0 detour=2632 (v_max=25.0) | conjunction=6 | new=6 cumulative=1137</span></span>
-<span><span class="co">#&gt; Iter 45: bridge=9820 prob=7 speed=0 detour=2632 (v_max=25.0) | conjunction=6 | new=6 cumulative=1143</span></span>
-<span><span class="co">#&gt; Iter 46: bridge=9815 prob=24 speed=0 detour=2632 (v_max=25.0) | conjunction=21 | new=21 cumulative=1164</span></span>
-<span><span class="co">#&gt; Iter 47: bridge=9849 prob=28 speed=0 detour=2633 (v_max=25.0) | conjunction=24 | new=24 cumulative=1188</span></span>
-<span><span class="co">#&gt; Iter 48: bridge=11089 prob=11 speed=0 detour=2630 (v_max=25.0) | conjunction=10 | new=10 cumulative=1198</span></span>
-<span><span class="co">#&gt; Iter 49: bridge=11087 prob=4 speed=0 detour=2627 (v_max=25.0) | conjunction=4 | new=4 cumulative=1202</span></span>
-<span><span class="co">#&gt; Iter 50: bridge=11085 prob=5 speed=0 detour=2625 (v_max=25.0) | conjunction=4 | new=4 cumulative=1206</span></span>
-<span><span class="co">#&gt; Iter 51: bridge=11083 prob=3 speed=0 detour=2624 (v_max=25.0) | conjunction=1 | new=1 cumulative=1207</span></span>
-<span><span class="co">#&gt; Iter 52: bridge=11083 prob=2 speed=0 detour=2624 (v_max=25.0) | conjunction=0 | new=0 cumulative=1207</span></span>
-<span><span class="co">#&gt; Block-expansion gate: DECLINED -- largest component holds only 10.2% of kept fixes (&lt; 80% required) -- cut severs continuous trajectory.</span></span>
-<span><span class="co">#&gt; === mt_clean_track: 1207 flagged (3.424% of 35256); stopped: no_new_flags ===</span></span>
-<span><span class="co">#&gt;     Returning the cleaned track (34049 rows). To inspect what was flagged, re-run with remove = FALSE.</span></span>
+<span><span class="co">#&gt; Iter 1: bridge=13438 prob=11 speed=0 detour=3127 (v_max=25.0) | conjunction=435 | new=435 cumulative=439</span></span>
+<span><span class="co">#&gt; Iter 2: bridge=10186 prob=35 speed=0 detour=2690 (v_max=25.0) | conjunction=61 | new=61 cumulative=500</span></span>
+<span><span class="co">#&gt; Iter 3: bridge=10178 prob=24 speed=0 detour=2662 (v_max=25.0) | conjunction=23 | new=23 cumulative=523</span></span>
+<span><span class="co">#&gt; Iter 4: bridge=10173 prob=22 speed=0 detour=2658 (v_max=25.0) | conjunction=16 | new=16 cumulative=539</span></span>
+<span><span class="co">#&gt; Iter 5: bridge=10193 prob=9 speed=0 detour=2656 (v_max=25.0) | conjunction=7 | new=7 cumulative=546</span></span>
+<span><span class="co">#&gt; Iter 6: bridge=10171 prob=12 speed=0 detour=2656 (v_max=25.0) | conjunction=9 | new=9 cumulative=555</span></span>
+<span><span class="co">#&gt; Iter 7: bridge=10183 prob=8 speed=0 detour=2656 (v_max=25.0) | conjunction=5 | new=5 cumulative=560</span></span>
+<span><span class="co">#&gt; Iter 8: bridge=10202 prob=13 speed=0 detour=2656 (v_max=25.0) | conjunction=8 | new=8 cumulative=568</span></span>
+<span><span class="co">#&gt; Iter 9: bridge=10190 prob=22 speed=0 detour=2655 (v_max=25.0) | conjunction=20 | new=20 cumulative=588</span></span>
+<span><span class="co">#&gt; Iter 10: bridge=10138 prob=20 speed=0 detour=2655 (v_max=25.0) | conjunction=14 | new=14 cumulative=602</span></span>
+<span><span class="co">#&gt; Iter 11: bridge=10142 prob=22 speed=0 detour=2655 (v_max=25.0) | conjunction=13 | new=13 cumulative=615</span></span>
+<span><span class="co">#&gt; Iter 12: bridge=10117 prob=35 speed=0 detour=2655 (v_max=25.0) | conjunction=32 | new=32 cumulative=647</span></span>
+<span><span class="co">#&gt; Iter 13: bridge=10093 prob=34 speed=0 detour=2654 (v_max=25.0) | conjunction=27 | new=27 cumulative=674</span></span>
+<span><span class="co">#&gt; Iter 14: bridge=10100 prob=18 speed=0 detour=2654 (v_max=25.0) | conjunction=16 | new=16 cumulative=690</span></span>
+<span><span class="co">#&gt; Iter 15: bridge=10048 prob=18 speed=0 detour=2653 (v_max=25.0) | conjunction=14 | new=14 cumulative=704</span></span>
+<span><span class="co">#&gt; Iter 16: bridge=10042 prob=14 speed=0 detour=2653 (v_max=25.0) | conjunction=12 | new=12 cumulative=716</span></span>
+<span><span class="co">#&gt; Iter 17: bridge=10079 prob=10 speed=0 detour=2652 (v_max=25.0) | conjunction=7 | new=7 cumulative=723</span></span>
+<span><span class="co">#&gt; Iter 18: bridge=10077 prob=12 speed=0 detour=2652 (v_max=25.0) | conjunction=9 | new=9 cumulative=732</span></span>
+<span><span class="co">#&gt; Iter 19: bridge=10073 prob=11 speed=0 detour=2652 (v_max=25.0) | conjunction=9 | new=9 cumulative=741</span></span>
+<span><span class="co">#&gt; Iter 20: bridge=10021 prob=16 speed=0 detour=2652 (v_max=25.0) | conjunction=15 | new=15 cumulative=756</span></span>
+<span><span class="co">#&gt; Iter 21: bridge=10007 prob=36 speed=0 detour=2651 (v_max=25.0) | conjunction=30 | new=30 cumulative=786</span></span>
+<span><span class="co">#&gt; Iter 22: bridge=10019 prob=22 speed=0 detour=2651 (v_max=25.0) | conjunction=20 | new=20 cumulative=806</span></span>
+<span><span class="co">#&gt; Iter 23: bridge=9990 prob=28 speed=0 detour=2648 (v_max=25.0) | conjunction=21 | new=21 cumulative=827</span></span>
+<span><span class="co">#&gt; Iter 24: bridge=10002 prob=3 speed=0 detour=2646 (v_max=25.0) | conjunction=4 | new=4 cumulative=831</span></span>
+<span><span class="co">#&gt; Iter 25: bridge=10000 prob=5 speed=0 detour=2644 (v_max=25.0) | conjunction=3 | new=3 cumulative=834</span></span>
+<span><span class="co">#&gt; Iter 26: bridge=10006 prob=9 speed=0 detour=2644 (v_max=25.0) | conjunction=7 | new=7 cumulative=841</span></span>
+<span><span class="co">#&gt; Iter 27: bridge=9997 prob=32 speed=0 detour=2644 (v_max=25.0) | conjunction=24 | new=24 cumulative=865</span></span>
+<span><span class="co">#&gt; Iter 28: bridge=10013 prob=6 speed=0 detour=2644 (v_max=25.0) | conjunction=6 | new=6 cumulative=871</span></span>
+<span><span class="co">#&gt; Iter 29: bridge=10016 prob=19 speed=0 detour=2642 (v_max=25.0) | conjunction=13 | new=13 cumulative=884</span></span>
+<span><span class="co">#&gt; Iter 30: bridge=10001 prob=16 speed=0 detour=2642 (v_max=25.0) | conjunction=10 | new=10 cumulative=894</span></span>
+<span><span class="co">#&gt; Iter 31: bridge=9995 prob=7 speed=0 detour=2642 (v_max=25.0) | conjunction=6 | new=6 cumulative=900</span></span>
+<span><span class="co">#&gt; Iter 32: bridge=9994 prob=29 speed=0 detour=2642 (v_max=25.0) | conjunction=27 | new=27 cumulative=927</span></span>
+<span><span class="co">#&gt; Iter 33: bridge=9981 prob=7 speed=0 detour=2642 (v_max=25.0) | conjunction=7 | new=7 cumulative=934</span></span>
+<span><span class="co">#&gt; Iter 34: bridge=9972 prob=19 speed=0 detour=2641 (v_max=25.0) | conjunction=14 | new=14 cumulative=948</span></span>
+<span><span class="co">#&gt; Iter 35: bridge=9956 prob=6 speed=0 detour=2641 (v_max=25.0) | conjunction=5 | new=5 cumulative=953</span></span>
+<span><span class="co">#&gt; Iter 36: bridge=9947 prob=42 speed=0 detour=2641 (v_max=25.0) | conjunction=37 | new=37 cumulative=990</span></span>
+<span><span class="co">#&gt; Iter 37: bridge=9924 prob=15 speed=0 detour=2641 (v_max=25.0) | conjunction=15 | new=15 cumulative=1005</span></span>
+<span><span class="co">#&gt; Iter 38: bridge=9932 prob=22 speed=0 detour=2638 (v_max=25.0) | conjunction=18 | new=18 cumulative=1023</span></span>
+<span><span class="co">#&gt; Iter 39: bridge=9909 prob=4 speed=0 detour=2638 (v_max=25.0) | conjunction=4 | new=4 cumulative=1027</span></span>
+<span><span class="co">#&gt; Iter 40: bridge=9912 prob=5 speed=0 detour=2636 (v_max=25.0) | conjunction=4 | new=4 cumulative=1031</span></span>
+<span><span class="co">#&gt; Iter 41: bridge=9909 prob=11 speed=0 detour=2636 (v_max=25.0) | conjunction=7 | new=7 cumulative=1038</span></span>
+<span><span class="co">#&gt; Iter 42: bridge=9908 prob=17 speed=0 detour=2635 (v_max=25.0) | conjunction=13 | new=13 cumulative=1051</span></span>
+<span><span class="co">#&gt; Iter 43: bridge=9902 prob=22 speed=0 detour=2635 (v_max=25.0) | conjunction=19 | new=19 cumulative=1070</span></span>
+<span><span class="co">#&gt; Iter 44: bridge=9887 prob=20 speed=0 detour=2635 (v_max=25.0) | conjunction=18 | new=18 cumulative=1088</span></span>
+<span><span class="co">#&gt; Iter 45: bridge=9878 prob=10 speed=0 detour=2633 (v_max=25.0) | conjunction=8 | new=8 cumulative=1096</span></span>
+<span><span class="co">#&gt; Iter 46: bridge=9879 prob=9 speed=0 detour=2632 (v_max=25.0) | conjunction=7 | new=7 cumulative=1103</span></span>
+<span><span class="co">#&gt; Iter 47: bridge=9878 prob=18 speed=0 detour=2632 (v_max=25.0) | conjunction=15 | new=15 cumulative=1118</span></span>
+<span><span class="co">#&gt; Iter 48: bridge=11132 prob=28 speed=0 detour=2632 (v_max=25.0) | conjunction=22 | new=22 cumulative=1140</span></span>
+<span><span class="co">#&gt; Iter 49: bridge=11100 prob=8 speed=0 detour=2632 (v_max=25.0) | conjunction=9 | new=9 cumulative=1149</span></span>
+<span><span class="co">#&gt; Iter 50: bridge=11096 prob=17 speed=0 detour=2630 (v_max=25.0) | conjunction=14 | new=14 cumulative=1163</span></span>
+<span><span class="co">#&gt; Iter 51: bridge=11094 prob=16 speed=0 detour=2630 (v_max=25.0) | conjunction=12 | new=12 cumulative=1175</span></span>
+<span><span class="co">#&gt; Iter 52: bridge=11096 prob=14 speed=0 detour=2630 (v_max=25.0) | conjunction=12 | new=12 cumulative=1187</span></span>
+<span><span class="co">#&gt; Iter 53: bridge=11093 prob=16 speed=0 detour=2630 (v_max=25.0) | conjunction=17 | new=17 cumulative=1204</span></span>
+<span><span class="co">#&gt; Iter 54: bridge=11082 prob=4 speed=0 detour=2626 (v_max=25.0) | conjunction=6 | new=6 cumulative=1210</span></span>
+<span><span class="co">#&gt; Iter 55: bridge=11085 prob=3 speed=0 detour=2622 (v_max=25.0) | conjunction=3 | new=3 cumulative=1213</span></span>
+<span><span class="co">#&gt; Iter 56: bridge=11085 prob=28 speed=0 detour=2620 (v_max=25.0) | conjunction=24 | new=24 cumulative=1237</span></span>
+<span><span class="co">#&gt; Iter 57: bridge=11068 prob=12 speed=0 detour=2619 (v_max=25.0) | conjunction=13 | new=13 cumulative=1250</span></span>
+<span><span class="co">#&gt; Iter 58: bridge=9793 prob=13 speed=0 detour=2615 (v_max=25.0) | conjunction=9 | new=9 cumulative=1259</span></span>
+<span><span class="co">#&gt; Iter 59: bridge=9809 prob=7 speed=0 detour=2615 (v_max=25.0) | conjunction=5 | new=5 cumulative=1264</span></span>
+<span><span class="co">#&gt; Iter 60: bridge=9808 prob=5 speed=0 detour=2615 (v_max=25.0) | conjunction=3 | new=3 cumulative=1267</span></span>
+<span><span class="co">#&gt; Iter 61: bridge=9805 prob=16 speed=0 detour=2615 (v_max=25.0) | conjunction=11 | new=11 cumulative=1278</span></span>
+<span><span class="co">#&gt; Iter 62: bridge=9793 prob=5 speed=0 detour=2615 (v_max=25.0) | conjunction=2 | new=2 cumulative=1280</span></span>
+<span><span class="co">#&gt; Iter 63: bridge=9783 prob=3 speed=0 detour=2615 (v_max=25.0) | conjunction=0 | new=0 cumulative=1280</span></span>
+<span><span class="co">#&gt; Block-expansion gate: DECLINED -- largest component holds only 9.9% of kept fixes (&lt; 80% required) -- cut severs continuous trajectory.</span></span>
+<span><span class="co">#&gt; === mt_clean_track: 1280 flagged (3.631% of 35256); stopped: no_new_flags ===</span></span>
+<span><span class="co">#&gt;     Returning the cleaned track (33976 rows). To inspect what was flagged, re-run with remove = FALSE.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"kept"</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">clean</span><span class="op">)</span>, <span class="st">"of"</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">Leo</span><span class="op">)</span>, <span class="st">"fixes\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; kept 34049 of 35256 fixes</span></span></code></pre></div>
+<span><span class="co">#&gt; kept 33976 of 35256 fixes</span></span></code></pre></div>
 <p>For long, irregular satellite tracks where you have no known top
 speed, leave the cap at its data-driven default
 (<code>v_max = NULL</code>) — that is the safe call.</p>
@@ -365,7 +376,7 @@ against an otherwise tight distribution:</p>
 <span><span class="co">#&gt; CPF_A (regular sampling, 23 planted outliers): 5 flagged of 1748 fixes</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Leo (vulture, satellite):"</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span>, <span class="st">"flagged of"</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">Leo</span><span class="op">)</span>, <span class="st">"fixes\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Leo (vulture, satellite): 9 flagged of 35256 fixes</span></span></code></pre></div>
+<span><span class="co">#&gt; Leo (vulture, satellite): 37 flagged of 35256 fixes</span></span></code></pre></div>
 <p>The check adapts to the data. Regular high-frequency sampling gives a
 tight distribution where planted errors jump out; irregular satellite
 data has wide natural variability that the gap threshold respects rather
@@ -387,8 +398,8 @@ It does not touch <code>is_outlier</code> — it only annotates.</p>
 <span><span class="co">#&gt; Persistence score distribution among flagged fixes:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">annotated</span><span class="op">$</span><span class="va">persistence_count</span><span class="op">[</span><span class="va">flagged</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; 4 </span></span>
-<span><span class="co">#&gt; 9</span></span></code></pre></div>
+<span><span class="co">#&gt;  4 </span></span>
+<span><span class="co">#&gt; 37</span></span></code></pre></div>
 <p>See
 <code><a href="../articles/OUTLIER_5_persistence_score.html">vignette("OUTLIER_5_persistence_score", package = "move2utils")</a></code>
 for the empirical class-conditional analysis on synthetic CPF data.</p>

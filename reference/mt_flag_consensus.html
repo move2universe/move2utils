@@ -15,7 +15,7 @@ mt_flag_consensus() is the canonical home for that decision."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -260,8 +260,8 @@ columns they do not mention.</p>
 
 
 <dl><dt><code>"class_aware"</code></dt>
-<dd><p>The default prior to v0.4.0
-(round-4 audit, 2026-05-11); the current default is
+<dd><p>The default prior to v0.4.0;
+the current default is
 <code>"evidence_corroborated"</code> (below). A fix is flagged if ANY
 of the following class rules fires:</p><ul><li><p><code>consensus</code>: at least 3 detectors agree</p></li>
 <li><p><code>geometric_spike</code>: bridge AND detour
@@ -342,7 +342,7 @@ is an abstention (no evidence either way), <em>not</em> evidence
 against. The combined score is returned as <code>combined_evidence</code>
 – the single commensurable scalar behind the decision, and the
 substrate for an optional one-lever sensitivity control (a user
-threshold on that column). See <code>DESIGN_evidence_accumulation.md</code>.</p></dd>
+threshold on that column).</p></dd>
 
 <dt><code>"any"</code></dt>
 <dd><p>Union of all detectors. Maximum recall,
@@ -383,18 +383,34 @@ emit the per-detector flag columns this function consumes).</p></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Default mode (evidence_corroborated) on a cleaned cascade output</span></span></span>
-<span class="r-in"><span><span class="va">cleaned</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_clean_track.html">mt_clean_track</a></span><span class="op">(</span><span class="va">track</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">cleaned</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_consensus</span><span class="op">(</span><span class="va">cleaned</span><span class="op">)</span>   <span class="co"># same as mt_clean_track default</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## a simulated track with known errors, shipped with the package</span></span></span>
+<span class="r-in"><span><span class="va">tracks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/synthetic_tracks.csv.gz"</span>,</span></span>
+<span class="r-in"><span>                              package <span class="op">=</span> <span class="st">"move2utils"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">track</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">tracks</span>, .track_id <span class="op">=</span> <span class="st">"CPF_C"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## the per-detector columns are kept only when nothing is removed</span></span></span>
+<span class="r-in"><span><span class="va">cleaned</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_clean_track.html">mt_clean_track</a></span><span class="op">(</span><span class="va">track</span>, remove <span class="op">=</span> <span class="cn">FALSE</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> No physiological speed cap supplied -- running with a data-driven cap chosen from your track.  This works well for most cases.  If your animal has multiple behavioural states (e.g. perched and flying) or you expect sustained-spoof errors, supplying `v_max =` (a published top speed in m/s) or `(mass = ..., mode = ...)` for the allometric estimate gives sharper results.  See `?v_phys_estimate` for the allometric helper; `?mt_clean_track` documents the failure modes of the auto-cap in detail.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 1: bridge=4 prob=3 speed=0 detour=4 (v_max=-) | conjunction=3 | new=3 cumulative=3</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 2: bridge=1 prob=5 speed=3 detour=1 (v_max=2.5) | conjunction=1 | new=1 cumulative=4</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 3: bridge=0 prob=6 speed=0 detour=0 (v_max=-) | conjunction=0 | new=0 cumulative=4</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === mt_clean_track: 4 flagged (2.162% of 185); stopped: no_new_flags ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     Returning all rows with flag columns attached. To drop flagged rows, either re-run with remove = TRUE (the default) or subset: x[!x$is_outlier, ].</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Default mode (evidence_corroborated), as in mt_clean_track()</span></span></span>
+<span class="r-in"><span><span class="va">cleaned</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_consensus</span><span class="op">(</span><span class="va">cleaned</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># More conservative: require a geometric AND a kinematic confirmer</span></span></span>
-<span class="r-in"><span><span class="va">cleaned</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_consensus</span><span class="op">(</span><span class="va">cleaned</span>, mode <span class="op">=</span> <span class="st">"strict"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">strict</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_consensus</span><span class="op">(</span><span class="va">cleaned</span>, mode <span class="op">=</span> <span class="st">"strict"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># User-defined: bridge alone (geometric impossibility only)</span></span></span>
-<span class="r-in"><span><span class="va">cleaned</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_consensus</span><span class="op">(</span><span class="va">cleaned</span>, mode <span class="op">=</span> <span class="st">"custom"</span>,</span></span>
-<span class="r-in"><span>                             custom <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">b</span>, <span class="va">p</span>, <span class="va">s</span>, <span class="va">d</span><span class="op">)</span> <span class="va">b</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="va">bridge_only</span> <span class="op">&lt;-</span> <span class="fu">mt_flag_consensus</span><span class="op">(</span><span class="va">cleaned</span>, mode <span class="op">=</span> <span class="st">"custom"</span>,</span></span>
+<span class="r-in"><span>                                 custom <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">b</span>, <span class="va">p</span>, <span class="va">s</span>, <span class="va">d</span><span class="op">)</span> <span class="va">b</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>default <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">cleaned</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span>, strict <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">strict</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  bridge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">bridge_only</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> default  strict  bridge </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       4       4       4 </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

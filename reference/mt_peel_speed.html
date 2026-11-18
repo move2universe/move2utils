@@ -19,7 +19,7 @@ surviving fix has max(step_in, step_out) &amp;gt; v_max."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -172,7 +172,7 @@ finished before hitting <code>max_iter</code>.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>This is the primitive that catches coherent multi-fix errors that
-per-fix detectors cannot resolve.  A K02-style spoof of 175 fixes
+per-fix detectors cannot resolve.  A GPS-spoofing episode of 175 fixes
 at a fake location has small step speeds internally (the fake
 trajectory is self-consistent) and only the jump-out / jump-back
 boundaries violate a physiological cap.  Peeling those boundaries
@@ -227,7 +227,7 @@ jump-out / jump-back boundaries), the auxiliary score may not
 discriminate between the spoof-interior boundary fix and the
 clean-track boundary fix.  The peel may then walk inward from one
 side only, or oscillate.  For known cluster-outlier datasets
-(Argos PTT spoof, K02-style), the symmetric default is the
+(Argos PTT or GPS spoofing), the symmetric default is the
 robust choice.</p>
     </div>
     <div class="section level2">
@@ -243,12 +243,23 @@ supplied.</p></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co">## Eagle with a known spoof cluster; physiological cap ~30 m/s.</span></span></span>
-<span class="r-in"><span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu">mt_peel_speed</span><span class="op">(</span><span class="va">eagle_track</span>, v_max <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## a simulated track with known errors, shipped with the package</span></span></span>
+<span class="r-in"><span><span class="va">tracks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/synthetic_tracks.csv.gz"</span>,</span></span>
+<span class="r-in"><span>                              package <span class="op">=</span> <span class="st">"move2utils"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">track</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">tracks</span>, .track_id <span class="op">=</span> <span class="st">"CPF_C"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## physiological cap ~30 m/s</span></span></span>
+<span class="r-in"><span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu">mt_peel_speed</span><span class="op">(</span><span class="va">track</span>, v_max <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Speed peel: v_max = 30 m/s -- 0 fix(es) peeled in 0 iterations.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 0 outliers (0.00% of 185) ===</span>
 <span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">clean</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Mode   FALSE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> logical     185 </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">clean</span><span class="op">$</span><span class="va">peel_iteration</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;NA&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  185 </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

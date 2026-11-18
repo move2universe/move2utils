@@ -13,7 +13,7 @@ object, or a named list of variance objects for multi-track input."></head><body
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,11 +81,13 @@ object, or a named list of variance objects for multi-track input.</p>
 <span>  location_error <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin <span class="op">=</span> <span class="fl">11</span>,</span>
 <span>  window_size <span class="op">=</span> <span class="fl">31</span>,</span>
-<span>  ext <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  dim_size <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>  ext_factor <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  dim_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  time_step <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  location_error_na <span class="op">=</span> <span class="st">"median"</span>,</span>
+<span>  res <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ext <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -104,10 +106,13 @@ estimated internally via <code><a href="mt_dbbmm_variance.html">mt_dbbmm_varianc
 
 
 <dt id="arg-raster">raster<a class="anchor" aria-label="anchor" href="#arg-raster"></a></dt>
-<dd><p>A <code><a href="https://rspatial.github.io/terra/reference/SpatRaster-class.html" class="external-link">terra::SpatRaster</a></code> defining the output grid, or a
-numeric scalar giving the cell size in map units, or <code>NULL</code> to
-auto-compute from <code>dim_size</code> and <code>ext</code>. For multi-track input with
-<code>NULL</code>, a common grid is computed from the combined extent.</p></dd>
+<dd><p>A <code><a href="https://rspatial.github.io/terra/reference/SpatRaster-class.html" class="external-link">terra::SpatRaster</a></code> template: the UD is computed for its
+cells and returned on that grid. A template is never enlarged; if it is
+too small for the bridges, the call stops and says on which sides; when
+the template is in the CRS the computation runs in, it also gives the
+<code><a href="https://rspatial.github.io/terra/reference/extend.html" class="external-link">terra::extend()</a></code> call that fixes it. Give at most one of <code>raster</code>,
+<code>res</code> and <code>dim_size</code>; with none, a grid is built from <code>dim_size = 100</code>.
+(A number here is the deprecated way of giving <code>res</code>.)</p></dd>
 
 
 <dt id="arg-location-error">location_error<a class="anchor" aria-label="anchor" href="#arg-location-error"></a></dt>
@@ -131,16 +136,18 @@ Only used when <code>object</code> is a <code>move2</code> object.</p></dd>
 Only used when <code>object</code> is a <code>move2</code> object.</p></dd>
 
 
-<dt id="arg-ext">ext<a class="anchor" aria-label="anchor" href="#arg-ext"></a></dt>
-<dd><p>Numeric. Extension factor for the bounding box when
-auto-creating the raster. Increase if the C kernel reports that the
-grid is not large enough. Default 0.5.</p></dd>
+<dt id="arg-ext-factor">ext_factor<a class="anchor" aria-label="anchor" href="#arg-ext-factor"></a></dt>
+<dd><p>Numeric, non-negative. Fraction of the track's
+bounding-box width and height added on each side of an automatically
+built grid. Default 0.5. If that box is too small for the bridges, the
+grid is enlarged to fit them (see “Grid”).</p></dd>
 
 
 <dt id="arg-dim-size">dim_size<a class="anchor" aria-label="anchor" href="#arg-dim-size"></a></dt>
-<dd><p>Integer. Number of cells along the longest dimension
-of the auto-generated raster. Higher values give finer resolution
-but slower computation. Default 100.</p></dd>
+<dd><p>Integer, at least 2. Number of cells along the longest
+side of an automatically built grid. Higher values give finer
+resolution but slower computation. Used when neither <code>raster</code> nor
+<code>res</code> is given, with a default of 100.</p></dd>
 
 
 <dt id="arg-time-step">time_step<a class="anchor" aria-label="anchor" href="#arg-time-step"></a></dt>
@@ -150,7 +157,9 @@ Smaller values give more precise UDs but are slower.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, print a computational size estimate.</p></dd>
+<dd><p>Logical. If <code>TRUE</code>, print a computational size estimate,
+report progress for multi-track input, and say when an automatic grid
+had to be enlarged.</p></dd>
 
 
 <dt id="arg-location-error-na">location_error_na<a class="anchor" aria-label="anchor" href="#arg-location-error-na"></a></dt>
@@ -158,6 +167,21 @@ Smaller values give more precise UDs but are slower.</p></dd>
 <code>location_error</code> vector.  Forwarded to <code><a href="mt_dbbmm_variance.html">mt_dbbmm_variance()</a></code>
 when <code>object</code> is a <code>move2</code>; ignored otherwise (the
 variance object already carries the imputed vector).</p></dd>
+
+
+<dt id="arg-res">res<a class="anchor" aria-label="anchor" href="#arg-res"></a></dt>
+<dd><p>Numeric. Cell size of an automatically built grid, in map
+units of the compute CRS (metres). Cells are square. For multi-track
+input, one common grid covers all tracks. A grid built from <code>res</code> or
+<code>dim_size</code>, enlarged or not, may have at most
+<code>getOption("move2utils.ud_max_cells", 1e8)</code> cells; above that the call
+stops before anything is allocated (class
+<code>move2utils_ud_grid_too_large</code>) and suggests a larger <code>res</code>.</p></dd>
+
+
+<dt id="arg-ext">ext<a class="anchor" aria-label="anchor" href="#arg-ext"></a></dt>
+<dd><p>Deprecated former name of <code>ext_factor</code>. Renamed because in
+<code>terra</code> <code>ext</code> denotes an extent.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -199,6 +223,42 @@ the surface; supply your data in a suitable metric projection if you want
 to avoid that step entirely.</p>
     </div>
     <div class="section level2">
+    <h2 id="grid">Grid<a class="anchor" aria-label="anchor" href="#grid"></a></h2>
+
+
+<p>The grid is either the template given as <code>raster</code>, or it is built
+automatically: the track's bounding box, widened by <code>ext_factor</code>, divided
+into square cells of size <code>res</code> or into <code>dim_size</code> cells along its longest
+side. The kernel spreads each bridge time step over four standard
+deviations around the bridge mean, so the grid has to reach that far
+beyond the track. An automatic grid that does not is enlarged until it
+does: with <code>res</code> the cell size holds and cells are added; with <code>dim_size</code>
+the cell count holds and the cells grow. A grid that is large enough is
+used unchanged, so results are identical to earlier versions wherever
+those succeeded. A template is never enlarged: if it is too small the
+call stops and says on which sides. Grids need at least two rows and two
+columns.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="coming-from-move">Coming from move<a class="anchor" aria-label="anchor" href="#coming-from-move"></a></h2>
+
+
+<p><code>mt_dbbmm_ud()</code> is the port of <code><a href="https://bartk.gitlab.io/move/reference/brownian.bridge.dyn.html" class="external-link">move::brownian.bridge.dyn()</a></code>, and its C
+kernel is <code>move</code>'s. Arguments map as follows: a <code>RasterLayer</code> as <code>raster</code>
+becomes a <code>SpatRaster</code> template as <code>raster</code>; a number as <code>raster</code> (the
+cell size) becomes <code>res</code>; <code>dimSize</code> becomes <code>dim_size</code>; <code>ext</code> becomes
+<code>ext_factor</code>; <code>bbox</code> becomes a template,
+<code>raster = terra::rast(&lt;extent&gt;, resolution = &lt;cell size&gt;, crs = &lt;crs&gt;)</code>.
+The defaults differ: <code>move</code> uses <code>ext = 0.3</code> and <code>dimSize = 10</code>, this
+package <code>ext_factor = 0.5</code> and <code>dim_size = 100</code>. Where <code>move</code> stops
+because the grid is too small, an automatic grid is enlarged here
+instead. <code>move</code>'s kernel also accepts a grid on which its window reaches
+exactly one cell beyond the last row or column, and then reads and writes
+outside the grid; such a grid counts as too small here. Given the same
+grid and the same variance, the UD agrees with <code>move</code> to within 3e-9
+relative (measured on <code><a href="https://bartk.gitlab.io/move/reference/leroy.html" class="external-link">move::leroy</a></code>).</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Kranstauber, B., Kays, R., LaPoint, S. D., Wikelski, M., &amp; Safi, K.
 (2012). A dynamic Brownian bridge movement model to estimate utilization
@@ -214,26 +274,28 @@ to extract variances.</p></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fishers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_example.html" class="external-link">mt_example</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fishers</span> <span class="op">&lt;-</span> <span class="va">fishers</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_query.html" class="external-link">st_is_empty</a></span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span>, <span class="op">]</span></span></span>
-<span class="r-in"><span><span class="va">f1</span> <span class="op">&lt;-</span> <span class="va">fishers</span><span class="op">[</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_track_id.html" class="external-link">mt_track_id</a></span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span> <span class="op">==</span> <span class="st">"F1"</span>, <span class="op">]</span></span></span>
-<span class="r-in"><span><span class="va">f1_proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">f1</span>, <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_aeqd_crs.html" class="external-link">mt_aeqd_crs</a></span><span class="op">(</span><span class="va">f1</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># One-step</span></span></span>
-<span class="r-in"><span><span class="va">ud</span> <span class="op">&lt;-</span> <span class="fu">mt_dbbmm_ud</span><span class="op">(</span><span class="va">f1_proj</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
-<span class="r-in"><span>                   window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span>, ext <span class="op">=</span> <span class="fl">0.85</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">leroy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">fishers</span>, .track_id <span class="op">=</span> <span class="st">"M1"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## the first 200 fixes keep the example quick</span></span></span>
+<span class="r-in"><span><span class="va">leroy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">leroy</span>, <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_aeqd_crs.html" class="external-link">mt_aeqd_crs</a></span><span class="op">(</span><span class="va">leroy</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span><span class="co">## One step: variance and UD</span></span></span>
+<span class="r-in"><span><span class="va">ud</span> <span class="op">&lt;-</span> <span class="fu">mt_dbbmm_ud</span><span class="op">(</span><span class="va">leroy</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
+<span class="r-in"><span>                  window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Computational size: 4.5e+07</span>
 <span class="r-in"><span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">ud</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="mt_dbbmm_ud-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Two-step (re-use variance for different raster settings)</span></span></span>
-<span class="r-in"><span><span class="va">var_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_dbbmm_variance.html">mt_dbbmm_variance</a></span><span class="op">(</span><span class="va">f1_proj</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
-<span class="r-in"><span>                              window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">ud_fine</span> <span class="op">&lt;-</span> <span class="fu">mt_dbbmm_ud</span><span class="op">(</span><span class="va">var_obj</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
-<span class="r-in"><span>                        dim_size <span class="op">=</span> <span class="fl">500</span>, ext <span class="op">=</span> <span class="fl">1.25</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="co">## Two steps: fit the variance once, re-use it for other grids</span></span></span>
+<span class="r-in"><span><span class="va">var_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_dbbmm_variance.html">mt_dbbmm_variance</a></span><span class="op">(</span><span class="va">leroy</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
+<span class="r-in"><span>                             window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ud_fine</span> <span class="op">&lt;-</span> <span class="fu">mt_dbbmm_ud</span><span class="op">(</span><span class="va">var_obj</span>, dim_size <span class="op">=</span> <span class="fl">300</span>, ext_factor <span class="op">=</span> <span class="fl">1.25</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Computational size: 4.0e+08</span>
+<span class="r-in"><span><span class="va">ud_50m</span>  <span class="op">&lt;-</span> <span class="fu">mt_dbbmm_ud</span><span class="op">(</span><span class="va">var_obj</span>, res <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Computational size: 3.2e+08</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

@@ -11,7 +11,7 @@ by at least min_votes methods is declared an outlier."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -167,12 +167,30 @@ output for additional confidence quantification).</p></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## a simulated track with known errors, shipped with the package</span></span></span>
+<span class="r-in"><span><span class="va">tracks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/synthetic_tracks.csv.gz"</span>,</span></span>
+<span class="r-in"><span>                              package <span class="op">=</span> <span class="st">"move2utils"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">track</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">tracks</span>, .track_id <span class="op">=</span> <span class="st">"CPF_C"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co">## Majority-vote flagging across three detection strategies:</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">mt_combined_outliers</span><span class="op">(</span><span class="va">track</span>, min_votes <span class="op">=</span> <span class="fl">2</span>,</span></span>
-<span class="r-in"><span>                             scan <span class="op">=</span> <span class="st">"forward-backward"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>                            scan <span class="op">=</span> <span class="st">"forward-backward"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === Combined outlier detection (3-method voting) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- Method 1: simultaneous (gap threshold) ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Gap: 3 flagged</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- Method 2: simultaneous (entropy threshold) ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Entropy: 9 flagged</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> --- Method 3: sequential scan ---</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   Sequential: 2 flagged</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === Combined: 4 outliers (min_votes=2, 2.16% of 185 locations) ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   By vote count: 0=176, 1=5, 2=3, 3=1</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">vote_count</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   0   1   2   3 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 176   5   3   1 </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

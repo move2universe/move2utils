@@ -21,7 +21,7 @@ mt_flag_speed_cap, etc.)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -211,10 +211,27 @@ the empirical class-conditional analysis on synthetic CPF data.</p></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## a simulated track with known errors, shipped with the package</span></span></span>
+<span class="r-in"><span><span class="va">tracks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/synthetic_tracks.csv.gz"</span>,</span></span>
+<span class="r-in"><span>                              package <span class="op">=</span> <span class="st">"move2utils"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">track</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">tracks</span>, .track_id <span class="op">=</span> <span class="st">"CPF_C"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co">## Cascade output annotated with persistence scores</span></span></span>
-<span class="r-in"><span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_clean_track.html">mt_clean_track</a></span><span class="op">(</span><span class="va">track</span>, mass <span class="op">=</span> <span class="fl">5</span>, mode <span class="op">=</span> <span class="st">"flying"</span>, remove <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_clean_track.html">mt_clean_track</a></span><span class="op">(</span><span class="va">track</span>, mass <span class="op">=</span> <span class="fl">5</span>, mode <span class="op">=</span> <span class="st">"flying"</span>,</span></span>
+<span class="r-in"><span>                        remove <span class="op">=</span> <span class="cn">FALSE</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Allometric v_max from Hirt et al. (2017): 30.89 m/s (mass = 5 kg, mode = flying); applied to all 1 individual(s).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Speed peel (pre-step) at v_max = 30.8873 m/s: 0 fix(es) removed in 0 iteration(s).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 1: bridge=4 prob=3 speed=0 detour=4 (v_max=30.9) | conjunction=3 | new=3 cumulative=3</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 2: bridge=1 prob=5 speed=3 detour=1 (v_max=30.9) | conjunction=1 | new=1 cumulative=4</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Iter 3: bridge=0 prob=6 speed=0 detour=0 (v_max=30.9) | conjunction=0 | new=0 cumulative=4</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Block-expansion gate: DECLINED -- only 1 component(s); nothing to expand.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === mt_clean_track: 4 flagged (2.162% of 185); stopped: no_new_flags ===</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     Returning all rows with flag columns attached. To drop flagged rows, either re-run with remove = TRUE (the default) or subset: x[!x$is_outlier, ].</span>
 <span class="r-in"><span><span class="va">annotated</span> <span class="op">&lt;-</span> <span class="fu">mt_persistence_score</span><span class="op">(</span><span class="va">clean</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Input is in longitude/latitude.  Auto-projecting to a local AEQD for Euclidean persistence math; output is returned in the original CRS.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Persistence: 4 flag(s) annotated; mean score = 3.00, max = 3.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> === 4 outliers (2.16% of 185) ===</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Class-aware filter (recommended pattern):</span></span></span>
 <span class="r-in"><span><span class="va">is_low_confidence</span> <span class="op">&lt;-</span></span></span>
@@ -222,7 +239,10 @@ the empirical class-conditional analysis on synthetic CPF data.</p></div>
 <span class="r-in"><span>  <span class="va">annotated</span><span class="op">$</span><span class="va">error_class</span> <span class="op"><a href="https://rspatial.github.io/terra/reference/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"state_anomaly"</span>, <span class="st">"consensus"</span><span class="op">)</span> <span class="op">&amp;</span></span></span>
 <span class="r-in"><span>  <span class="va">annotated</span><span class="op">$</span><span class="va">persistence_count</span> <span class="op">&lt;</span> <span class="fl">3</span></span></span>
 <span class="r-in"><span><span class="va">annotated</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">[</span><span class="va">is_low_confidence</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">FALSE</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">annotated</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FALSE  TRUE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   181     4 </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

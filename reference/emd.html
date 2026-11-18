@@ -21,7 +21,7 @@ more than speed."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -219,9 +219,10 @@ pre-mask; <code><a href="https://bartk.gitlab.io/move/reference/emd.html" class=
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE</span>
 <span class="r-in"><span><span class="va">fishers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_example.html" class="external-link">mt_example</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fishers</span> <span class="op">&lt;-</span> <span class="va">fishers</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_query.html" class="external-link">st_is_empty</a></span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span>, <span class="op">]</span></span></span>
 <span class="r-in"><span></span></span>
@@ -231,18 +232,37 @@ pre-mask; <code><a href="https://bartk.gitlab.io/move/reference/emd.html" class=
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">ids</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="va">fishers</span><span class="op">[</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_track_id.html" class="external-link">mt_track_id</a></span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span> <span class="op">==</span> <span class="va">i</span>, <span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">300</span>, <span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sub_p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">sub</span>, <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_aeqd_crs.html" class="external-link">mt_aeqd_crs</a></span><span class="op">(</span><span class="va">sub</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## time_step = 5 (minutes): the default, a fifteenth of the shortest</span></span></span>
+<span class="r-in"><span><span class="co">## time lag (0.4 min in F2), would make the UDs slow to compute</span></span></span>
 <span class="r-in"><span><span class="va">stk</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_dbbmm_ud.html">mt_dbbmm_ud</a></span><span class="op">(</span><span class="va">sub_p</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
-<span class="r-in"><span>                    window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span>,</span></span>
-<span class="r-in"><span>                    raster <span class="op">=</span> <span class="fl">100</span>, ext <span class="op">=</span> <span class="fl">1.25</span><span class="op">)</span></span></span>
+<span class="r-in"><span>                   window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span>,</span></span>
+<span class="r-in"><span>                   res <span class="op">=</span> <span class="fl">100</span>, ext_factor <span class="op">=</span> <span class="fl">1.25</span>, time_step <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Computing UD for track: F1</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Computing UD for track: F2</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Computing UD for track: M1</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">d_sink</span> <span class="op">&lt;-</span> <span class="fu">emd</span><span class="op">(</span><span class="va">stk</span><span class="op">)</span>                      <span class="co"># fast, default</span></span></span>
 <span class="r-in"><span><span class="va">d_sink</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          F1       F2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> F2 5822.539         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> M1 6498.191 1970.965</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## Exact solver — requires the `emdist` package:</span></span></span>
+<span class="r-in"><span><span class="co">## Exact solver: requires the `emdist` package, and is practical only</span></span></span>
+<span class="r-in"><span><span class="co">## on coarse grids</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"emdist"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="va">d_exact</span> <span class="op">&lt;-</span> <span class="fu">emd</span><span class="op">(</span><span class="va">stk</span>, method <span class="op">=</span> <span class="st">"exact"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">stk_coarse</span> <span class="op">&lt;-</span> <span class="fu"><a href="mt_dbbmm_ud.html">mt_dbbmm_ud</a></span><span class="op">(</span><span class="va">sub_p</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
+<span class="r-in"><span>                            window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span>,</span></span>
+<span class="r-in"><span>                            dim_size <span class="op">=</span> <span class="fl">30</span>, ext_factor <span class="op">=</span> <span class="fl">1.25</span>,</span></span>
+<span class="r-in"><span>                            time_step <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">d_exact</span> <span class="op">&lt;-</span> <span class="fu">emd</span><span class="op">(</span><span class="va">stk_coarse</span>, method <span class="op">=</span> <span class="st">"exact"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">d_exact</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Computing UD for track: F1</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Computing UD for track: F2</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Computing UD for track: M1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          F1       F2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> F2 6630.633         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> M1 6644.274 1664.923</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

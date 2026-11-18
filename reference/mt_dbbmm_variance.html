@@ -11,7 +11,7 @@ multi-track move2 objects."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -136,8 +136,8 @@ Must satisfy <code>window_size &gt;= 2 * margin + 1</code>.</p></dd>
 
 <dt id="arg-parallel-cores">parallel, cores<a class="anchor" aria-label="anchor" href="#arg-parallel-cores"></a></dt>
 <dd><p>Retained for API compatibility. Since 0.2.0
-the variance kernel is implemented in C with OpenMP threading
-(commit <code>bf8eb34</code>); these arguments are no-ops at the R level.
+the variance kernel is implemented in C with OpenMP threading;
+these arguments are no-ops at the R level.
 To control thread count, set the <code>OMP_NUM_THREADS</code> environment
 variable before invoking R.</p></dd>
 
@@ -198,8 +198,10 @@ model selection (Kranstauber et al. 2012). The window slides one
 position at a time, and the final variance for each location is the
 mean across all windows that covered it.</p>
 <p>The variance estimation and breakpoint testing are implemented in C
-(Brent's method optimizer) for performance. The sliding window loop
-can optionally be parallelised across CPU cores.</p>
+(Brent's method optimizer) for performance. The windows are processed
+in parallel by OpenMP threads in the C code, whose number is set by the
+<code>OMP_NUM_THREADS</code> environment variable rather than by <code>parallel</code> or
+<code>cores</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -220,29 +222,33 @@ vector, <code><a href="mt_dbgb_variance.html">mt_dbgb_variance()</a></code> for 
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bartk.gitlab.io/move2/" class="external-link">move2</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/move2universe/move2utils" class="external-link">move2utils</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Load and prepare example data</span></span></span>
 <span class="r-in"><span><span class="va">fishers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_read.html" class="external-link">mt_read</a></span><span class="op">(</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_example.html" class="external-link">mt_example</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fishers</span> <span class="op">&lt;-</span> <span class="va">fishers</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_query.html" class="external-link">st_is_empty</a></span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span>, <span class="op">]</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Single track</span></span></span>
-<span class="r-in"><span><span class="va">f1</span> <span class="op">&lt;-</span> <span class="va">fishers</span><span class="op">[</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_track_id.html" class="external-link">mt_track_id</a></span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span> <span class="op">==</span> <span class="st">"F1"</span>, <span class="op">]</span></span></span>
-<span class="r-in"><span><span class="va">f1_proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">f1</span>, <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_aeqd_crs.html" class="external-link">mt_aeqd_crs</a></span><span class="op">(</span><span class="va">f1</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">var_obj</span> <span class="op">&lt;-</span> <span class="fu">mt_dbbmm_variance</span><span class="op">(</span><span class="va">f1_proj</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
-<span class="r-in"><span>                              window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">leroy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">fishers</span>, .track_id <span class="op">=</span> <span class="st">"M1"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">leroy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">leroy</span>, <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_aeqd_crs.html" class="external-link">mt_aeqd_crs</a></span><span class="op">(</span><span class="va">leroy</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## Single track</span></span></span>
+<span class="r-in"><span><span class="va">var_obj</span> <span class="op">&lt;-</span> <span class="fu">mt_dbbmm_variance</span><span class="op">(</span><span class="va">leroy</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
+<span class="r-in"><span>                             window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">var_obj</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_time.html" class="external-link">mt_time</a></span><span class="op">(</span><span class="va">f1_proj</span><span class="op">)</span>, <span class="fu"><a href="mt_motion_variance.html">mt_motion_variance</a></span><span class="op">(</span><span class="va">var_obj</span><span class="op">)</span>,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Dynamic Brownian Bridge Movement Model — variance estimate</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Locations: 919</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Window size: 31, Margin: 11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Breakpoints found: 646</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Variance range: 0.00 – 6871.28</span>
+<span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_time.html" class="external-link">mt_time</a></span><span class="op">(</span><span class="va">leroy</span><span class="op">)</span>, <span class="fu"><a href="mt_motion_variance.html">mt_motion_variance</a></span><span class="op">(</span><span class="va">var_obj</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>     type <span class="op">=</span> <span class="st">"l"</span>, xlab <span class="op">=</span> <span class="st">"Time"</span>, ylab <span class="op">=</span> <span class="st">"BM variance"</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="mt_dbbmm_variance-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Multiple tracks</span></span></span>
-<span class="r-in"><span><span class="va">fishers_proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">fishers</span>, <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_aeqd_crs.html" class="external-link">mt_aeqd_crs</a></span><span class="op">(</span><span class="va">fishers</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">var_list</span> <span class="op">&lt;-</span> <span class="fu">mt_dbbmm_variance</span><span class="op">(</span><span class="va">fishers_proj</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
-<span class="r-in"><span>                               window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## Several tracks (here three): a named list, one variance object per track</span></span></span>
+<span class="r-in"><span><span class="va">three</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/dplyr-track.html" class="external-link">filter_track_data</a></span><span class="op">(</span><span class="va">fishers</span>, .track_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"F1"</span>, <span class="st">"M1"</span>, <span class="st">"M2"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">three</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">three</span>, <span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_aeqd_crs.html" class="external-link">mt_aeqd_crs</a></span><span class="op">(</span><span class="va">three</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">var_list</span> <span class="op">&lt;-</span> <span class="fu">mt_dbbmm_variance</span><span class="op">(</span><span class="va">three</span>, location_error <span class="op">=</span> <span class="fl">25</span>,</span></span>
+<span class="r-in"><span>                              window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">var_list</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "F1" "M1" "M2"</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -148,7 +148,7 @@ it returns the cleaned track.</p>
 <span><span class="co">#&gt; No physiological speed cap supplied -- running with a data-driven cap chosen from your track.  This works well for most cases.  If your animal has multiple behavioural states (e.g. perched and flying) or you expect sustained-spoof errors, supplying `v_max =` (a published top speed in m/s) or `(mass = ..., mode = ...)` for the allometric estimate gives sharper results.  See `?v_phys_estimate` for the allometric helper; `?mt_clean_track` documents the failure modes of the auto-cap in detail.</span></span>
 <span><span class="co">#&gt; Auto-cap landed at 60.2 m/s -- above the Hirt 2017 95% upper CI of the maximum biological speed (~52.6 m/s).  The gap finder is detecting a structural break within the outlier tail. Supply `(mass, mode)` or a hard `v_max` for a principled physiological cap.  See `?v_phys_estimate`.</span></span>
 <span><span class="co">#&gt; Iter 1: bridge=20 prob=5 speed=23 detour=11 (v_max=60.2) | conjunction=22 | new=22 cumulative=22</span></span>
-<span><span class="co">#&gt; Iter 2: bridge=3 prob=16 speed=4 detour=2 (v_max=20.3) | conjunction=3 | new=3 cumulative=25</span></span>
+<span><span class="co">#&gt; Iter 2: bridge=3 prob=16 speed=4 detour=2 (v_max=25.0) | conjunction=3 | new=3 cumulative=25</span></span>
 <span><span class="co">#&gt; Iter 3: bridge=0 prob=12 speed=0 detour=2 (v_max=-) | conjunction=0 | new=0 cumulative=25</span></span>
 <span><span class="co">#&gt; === mt_clean_track: 25 flagged (1.430% of 1748); stopped: no_new_flags ===</span></span>
 <span><span class="co">#&gt;     Returning the cleaned track (1723 rows). To inspect what was flagged, re-run with remove = FALSE.</span></span></code></pre></div>
@@ -183,7 +183,7 @@ would be removed are labelled.</p>
 <span><span class="co">#&gt; No physiological speed cap supplied -- running with a data-driven cap chosen from your track.  This works well for most cases.  If your animal has multiple behavioural states (e.g. perched and flying) or you expect sustained-spoof errors, supplying `v_max =` (a published top speed in m/s) or `(mass = ..., mode = ...)` for the allometric estimate gives sharper results.  See `?v_phys_estimate` for the allometric helper; `?mt_clean_track` documents the failure modes of the auto-cap in detail.</span></span>
 <span><span class="co">#&gt; Auto-cap landed at 60.2 m/s -- above the Hirt 2017 95% upper CI of the maximum biological speed (~52.6 m/s).  The gap finder is detecting a structural break within the outlier tail. Supply `(mass, mode)` or a hard `v_max` for a principled physiological cap.  See `?v_phys_estimate`.</span></span>
 <span><span class="co">#&gt; Iter 1: bridge=20 prob=5 speed=23 detour=11 (v_max=60.2) | conjunction=22 | new=22 cumulative=22</span></span>
-<span><span class="co">#&gt; Iter 2: bridge=3 prob=16 speed=4 detour=2 (v_max=20.3) | conjunction=3 | new=3 cumulative=25</span></span>
+<span><span class="co">#&gt; Iter 2: bridge=3 prob=16 speed=4 detour=2 (v_max=25.0) | conjunction=3 | new=3 cumulative=25</span></span>
 <span><span class="co">#&gt; Iter 3: bridge=0 prob=12 speed=0 detour=2 (v_max=-) | conjunction=0 | new=0 cumulative=25</span></span>
 <span><span class="co">#&gt; === mt_clean_track: 25 flagged (1.430% of 1748); stopped: no_new_flags ===</span></span>
 <span><span class="co">#&gt;     Returning all rows with flag columns attached. To drop flagged rows, either re-run with remove = TRUE (the default) or subset: x[!x$is_outlier, ].</span></span>
@@ -340,7 +340,7 @@ from across-track deviation and classifies the kind of error. See
 <span><span class="co">#&gt; Running bridge-residual detection (method = combined) on 1748 locations...</span></span>
 <span><span class="co">#&gt;   Iter 1: flagged 6 (break at eta = 1591.91 / eta_perp = 406.83).</span></span>
 <span><span class="co">#&gt;   Iter 2: flagged 7 (break at eta = 1472.59 / eta_perp = 56.83).</span></span>
-<span><span class="co">#&gt;   Iter 3: flagged 7 (break at eta = 1254.78 / eta_perp = 679.59).</span></span>
+<span><span class="co">#&gt;   Iter 3: flagged 7 (break at eta = 1254.78 / eta_perp = 505.75).</span></span>
 <span><span class="co">#&gt; === 20 outliers (1.14% of 1748) ===</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"path-position flagged:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">br</span><span class="op">$</span><span class="va">is_outlier</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; path-position flagged: 20</span></span></code></pre></div>
@@ -404,7 +404,7 @@ filter on cascade output — see
 <span><span class="co">#&gt; No physiological speed cap supplied -- running with a data-driven cap chosen from your track.  This works well for most cases.  If your animal has multiple behavioural states (e.g. perched and flying) or you expect sustained-spoof errors, supplying `v_max =` (a published top speed in m/s) or `(mass = ..., mode = ...)` for the allometric estimate gives sharper results.  See `?v_phys_estimate` for the allometric helper; `?mt_clean_track` documents the failure modes of the auto-cap in detail.</span></span>
 <span><span class="co">#&gt; Auto-cap landed at 60.2 m/s -- above the Hirt 2017 95% upper CI of the maximum biological speed (~52.6 m/s).  The gap finder is detecting a structural break within the outlier tail. Supply `(mass, mode)` or a hard `v_max` for a principled physiological cap.  See `?v_phys_estimate`.</span></span>
 <span><span class="co">#&gt; Iter 1: bridge=20 prob=5 speed=23 detour=11 (v_max=60.2) | conjunction=22 | new=22 cumulative=22</span></span>
-<span><span class="co">#&gt; Iter 2: bridge=3 prob=16 speed=4 detour=2 (v_max=20.3) | conjunction=3 | new=3 cumulative=25</span></span>
+<span><span class="co">#&gt; Iter 2: bridge=3 prob=16 speed=4 detour=2 (v_max=25.0) | conjunction=3 | new=3 cumulative=25</span></span>
 <span><span class="co">#&gt; Iter 3: bridge=0 prob=12 speed=0 detour=2 (v_max=-) | conjunction=0 | new=0 cumulative=25</span></span>
 <span><span class="co">#&gt; === mt_clean_track: 25 flagged (1.430% of 1748); stopped: no_new_flags ===</span></span>
 <span><span class="co">#&gt;     Returning all rows with flag columns attached. To drop flagged rows, either re-run with remove = TRUE (the default) or subset: x[!x$is_outlier, ].</span></span>
@@ -583,10 +583,9 @@ rows, drop them before cleaning:
 <p><strong>Non-Movebank vendors.</strong> If your columns differ from
 the Movebank names (Vectronic, Lotek, Telonics, Sirtrack, custom feeds),
 auto-detection won’t find them and the cleaning runs in degraded mode
-(still works, without the extra information). A unified quality-column
-resolver is in design (<code>DESIGN_quality_columns.md</code>); for now,
-either rename the columns to the Movebank names before cleaning, or pass
-per-fix quality functions directly via
+(still works, without the extra information). Until a resolver for other
+vendors’ column names exists, either rename the columns to the Movebank
+names before cleaning, or pass per-fix quality functions directly via
 <code>mt_flag_outliers(quality_columns = list(...))</code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

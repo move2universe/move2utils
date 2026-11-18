@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -216,15 +216,18 @@ internally) and produces a <code>SpatRaster</code> whose cells sum to
 1.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ud_dbgb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_dbgb_ud.html">mt_dbgb_ud</a></span><span class="op">(</span><span class="va">var_dbgb</span>, location_error <span class="op">=</span> <span class="fl">20</span>,</span>
-<span>                       raster <span class="op">=</span> <span class="fl">100</span>, ext <span class="op">=</span> <span class="fl">0.85</span><span class="op">)</span></span>
+<span>                       res <span class="op">=</span> <span class="fl">100</span>, ext_factor <span class="op">=</span> <span class="fl">0.85</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">ud_dbgb</span>, main <span class="op">=</span> <span class="st">"dBGB utilisation distribution"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="UD_dbgb_ud_files/figure-html/ud-1.png" class="r-plt" alt="" width="672"></p>
-<p>If you see <code>The raster does not extent far enough ...</code>,
-increase <code>ext</code> (padding around the auto-generated raster) or
-pass a pre-made <code>SpatRaster</code> that is large enough. The dBGB
-kernel needs more margin than dBBMM when the parallel variance is high,
-because the bridge extends further along the direction of travel.</p>
+<p>The dBGB kernel reaches further from the track than the dBBMM kernel
+when the parallel variance is high, because the bridge extends further
+along the direction of travel. An automatically built grid is enlarged
+until every bridge fits, so <code>ext_factor</code> (the padding around
+the track’s bounding box) only sets a minimum. A <code>SpatRaster</code>
+passed as <code>raster</code> is never enlarged: if it is too small, the
+call stops and gives the <code><a href="https://rspatial.github.io/terra/reference/extend.html" class="external-link">terra::extend()</a></code> call that makes it
+large enough.</p>
 </div>
 <div class="section level2">
 <h2 id="cumulative-volume-ud-and-isopleths">Cumulative-volume UD and isopleths<a class="anchor" aria-label="anchor" href="#cumulative-volume-ud-and-isopleths"></a>
@@ -252,8 +255,8 @@ track, same grid, same <code>location_error</code>:</p>
 <span>  window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">11</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Input is in longitude/latitude.  Auto-projecting to a local AEQD CRS for dynamic Brownian-bridge variance estimation; distances and variances are in metres.</span></span>
-<span><span class="va">ud_dbbmm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_dbbmm_ud.html">mt_dbbmm_ud</a></span><span class="op">(</span><span class="va">var_dbbmm</span>, location_error <span class="op">=</span> <span class="fl">20</span>, raster <span class="op">=</span> <span class="fl">100</span>,</span>
-<span>                         ext <span class="op">=</span> <span class="fl">0.85</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">ud_dbbmm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_dbbmm_ud.html">mt_dbbmm_ud</a></span><span class="op">(</span><span class="va">var_dbbmm</span>, location_error <span class="op">=</span> <span class="fl">20</span>, res <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                         ext_factor <span class="op">=</span> <span class="fl">0.85</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## put both UDs on the same extent so the two panels are comparable</span></span>
 <span><span class="va">common_ext</span> <span class="op">&lt;-</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/union.html" class="external-link">union</a></span><span class="op">(</span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/ext.html" class="external-link">ext</a></span><span class="op">(</span><span class="va">ud_dbbmm</span><span class="op">)</span>, <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/ext.html" class="external-link">ext</a></span><span class="op">(</span><span class="va">ud_dbgb</span><span class="op">)</span><span class="op">)</span></span>
@@ -286,8 +289,8 @@ index it one shorter than the track length (n-1 segments).</p>
 <code class="sourceCode R"><span><span class="va">lag_min</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://bartk.gitlab.io/move2/reference/mt_time.html" class="external-link">mt_time_lags</a></span><span class="op">(</span><span class="va">leroy</span>, units <span class="op">=</span> <span class="st">"min"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">var_dbgb</span><span class="op">$</span><span class="va">seg_interest</span><span class="op">[</span><span class="va">lag_min</span> <span class="op">&gt;</span> <span class="fl">300</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">FALSE</span></span>
 <span></span>
-<span><span class="va">ud_masked</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_dbgb_ud.html">mt_dbgb_ud</a></span><span class="op">(</span><span class="va">var_dbgb</span>, location_error <span class="op">=</span> <span class="fl">20</span>, raster <span class="op">=</span> <span class="fl">100</span>,</span>
-<span>                         ext <span class="op">=</span> <span class="fl">0.85</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">ud_masked</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_dbgb_ud.html">mt_dbgb_ud</a></span><span class="op">(</span><span class="va">var_dbgb</span>, location_error <span class="op">=</span> <span class="fl">20</span>, res <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                         ext_factor <span class="op">=</span> <span class="fl">0.85</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="further-reading">Further reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>

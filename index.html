@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,7 +81,7 @@
 <!-- badges: start -->
 
 <blockquote>
-<p><strong>Public release.</strong> The source of truth for <code>move2utils</code> is its development repository on <a href="https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils" class="external-link">MPCDF GitLab</a>; each release is mirrored to <a href="https://github.com/move2universe/move2utils" class="external-link">GitHub</a> for public use. Documentation: <a href="https://move2universe.github.io/move2utils" class="uri">https://move2universe.github.io/move2utils</a>. Please report bugs and ask questions by <a href="https://github.com/move2universe/move2utils/issues" class="external-link">opening an issue</a>.</p>
+<p><strong>Public release.</strong> <code>move2utils</code> is developed in an MPCDF-internal GitLab repository; each release is published here on <a href="https://github.com/move2universe/move2utils" class="external-link">GitHub</a> for public use. Documentation: <a href="https://move2universe.github.io/move2utils" class="uri">https://move2universe.github.io/move2utils</a>. Please report bugs and ask questions by <a href="https://github.com/move2universe/move2utils/issues" class="external-link">opening an issue</a>.</p>
 </blockquote>
 <p>Utility functions for animal-movement data stored as <a href="https://bartk.gitlab.io/move2/" class="external-link"><code>move2</code></a> objects. A home for a handful of ports from the legacy <code>move</code> package, together with a small amount of novel scientific machinery described in a companion paper.</p>
 <div class="float">
@@ -96,58 +96,58 @@
 <col width="36%">
 <col width="40%">
 </colgroup>
-<thead><tr>
+<thead><tr class="header">
 <th>Topic</th>
 <th>Functions</th>
 <th>Provenance</th>
 </tr></thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>Utilisation distributions &amp; variance</td>
 <td>
 <code><a href="reference/mt_dbbmm_variance.html">mt_dbbmm_variance()</a></code>, <code><a href="reference/mt_dbbmm_ud.html">mt_dbbmm_ud()</a></code>, <code><a href="reference/mt_dbgb_variance.html">mt_dbgb_variance()</a></code>, <code><a href="reference/mt_dbgb_ud.html">mt_dbgb_ud()</a></code>, <code><a href="reference/mt_motion_variance.html">mt_motion_variance()</a></code>, <code><a href="reference/mt_suggest_dbbmm_window.html">mt_suggest_dbbmm_window()</a></code>, <code><a href="reference/ud_volume.html">ud_volume()</a></code>, <code><a href="reference/ud_outer_probability.html">ud_outer_probability()</a></code>, <code><a href="reference/emd.html">emd()</a></code>
 </td>
 <td>Ported from <code>move</code>. C kernels kept; deprecated <code>sp</code> dependencies dropped in favour of <code>sf</code>/<code>terra</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Corridor detection</td>
 <td><code><a href="reference/mt_corridor.html">mt_corridor()</a></code></td>
 <td>Ported from <code><a href="https://bartk.gitlab.io/move/reference/corridor.html" class="external-link">move::corridor()</a></code> (LaPoint et al. 2013). Spatial-indexing (<code>sf</code> R-tree) replaces the old <code>sp</code>/<code>rgeos</code> path.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Outlier detection — four primitives + unified entry-point</td>
 <td>
 <code><a href="reference/mt_clean_track.html">mt_clean_track()</a></code> (unified entry-point), <code><a href="reference/mt_flag_outliers_bridge.html">mt_flag_outliers_bridge()</a></code>, <code><a href="reference/mt_flag_outliers_detour.html">mt_flag_outliers_detour()</a></code>, <code><a href="reference/mt_flag_outliers.html">mt_flag_outliers()</a></code>, <code><a href="reference/mt_flag_speed_cap.html">mt_flag_speed_cap()</a></code>, <code><a href="reference/mt_peel_speed.html">mt_peel_speed()</a></code>, <code><a href="reference/v_phys_estimate.html">v_phys_estimate()</a></code>, <code><a href="reference/mt_suggest_speed_cap.html">mt_suggest_speed_cap()</a></code>, <code><a href="reference/mt_diagnose_clean_track.html">mt_diagnose_clean_track()</a></code>, <code><a href="reference/mt_flag_consensus.html">mt_flag_consensus()</a></code>
 </td>
 <td>New. Four complementary primitives (geometric bridge-residual, path-vs-displacement detour ratio, probabilistic movement-metric, step-level speed cap) composable individually or through <code><a href="reference/mt_clean_track.html">mt_clean_track()</a></code> which iterates them under the evidence-corroborated consensus rule (the default; configurable via <code>consensus =</code>, e.g. the previous <code>"class_aware"</code>) plus topological block-expansion. Described in the companion paper.</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Outlier detection — state-aware bridge variants (standalone)</td>
 <td>
 <code><a href="reference/mt_flag_outliers_dbgb.html">mt_flag_outliers_dbgb()</a></code>, <code><a href="reference/mt_flag_outliers_dbbmm.html">mt_flag_outliers_dbbmm()</a></code>
 </td>
 <td>Estimate per-axis bridge motion variance and flag fixes via an envelope rule across three Z channels (<code>bridge_z_class</code> taxonomy); useful when behavioural states make a single global threshold over- or under-flag. Currently exported as standalone primitives, not wired into the cascade.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Outlier detection — alternative strategies</td>
 <td>
 <code><a href="reference/mt_sequential_outliers.html">mt_sequential_outliers()</a></code>, <code><a href="reference/mt_combined_outliers.html">mt_combined_outliers()</a></code>
 </td>
 <td>Voting/scanning alternatives on the probability surface. See <code><a href="reference/mt_clean_track.html">?mt_clean_track</a></code>’s <code>@seealso</code> for when to reach for each.</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Outlier detection — multi-scale persistence annotation</td>
 <td><code><a href="reference/mt_persistence_score.html">mt_persistence_score()</a></code></td>
 <td>Detector-agnostic confidence helper. Annotates any flagger’s output with a per-flag persistence score across temporal scales; recommended use is class-aware filtering on cascade output. See <code><a href="articles/OUTLIER_5_persistence_score.html">vignette("OUTLIER_5_persistence_score")</a></code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Pre-cleaning helpers</td>
 <td>
 <code><a href="reference/mt_filter_gps_quality.html">mt_filter_gps_quality()</a></code>, <code><a href="reference/mt_mask_segments.html">mt_mask_segments()</a></code>
 </td>
 <td>Drop fixes whose GPS geometry is unreliable; mask track segments by predicate.</td>
 </tr>
-<tr>
+<tr class="even">
 <td>Trajectory utilities</td>
 <td>
 <code><a href="reference/mt_thin_distance.html">mt_thin_distance()</a></code>, <code><a href="reference/mt_thin_time.html">mt_thin_time()</a></code>
@@ -194,15 +194,16 @@
 <span><span class="co">## error in metres; `window_size` / `margin` set the moving window for the</span></span>
 <span><span class="co">## variance breakpoint search (tune with `mt_suggest_dbbmm_window()`).</span></span>
 <span><span class="va">var</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/mt_dbbmm_variance.html">mt_dbbmm_variance</a></span><span class="op">(</span><span class="va">leroy</span>, location_error <span class="op">=</span> <span class="fl">25</span>, window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">7</span><span class="op">)</span></span>
-<span><span class="va">ud</span>  <span class="op">&lt;-</span> <span class="fu"><a href="reference/mt_dbbmm_ud.html">mt_dbbmm_ud</a></span><span class="op">(</span><span class="va">var</span>, dim_size <span class="op">=</span> <span class="fl">600</span>, ext <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>        <span class="co"># isotropic UD raster</span></span>
+<span><span class="va">ud</span>  <span class="op">&lt;-</span> <span class="fu"><a href="reference/mt_dbbmm_ud.html">mt_dbbmm_ud</a></span><span class="op">(</span><span class="va">var</span>, dim_size <span class="op">=</span> <span class="fl">600</span>, ext_factor <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="co"># isotropic UD raster</span></span>
 <span><span class="va">vol</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ud_volume.html">ud_volume</a></span><span class="op">(</span><span class="va">ud</span><span class="op">)</span>                                    <span class="co"># cumulative-volume space</span></span>
 <span><span class="va">vol</span><span class="op">[</span><span class="va">vol</span><span class="op">[</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">0.99</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span>                                 <span class="co"># keep the 99% range</span></span>
 <span><span class="va">vol</span> <span class="op">&lt;-</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/trim.html" class="external-link">trim</a></span><span class="op">(</span><span class="va">vol</span><span class="op">)</span>                                 <span class="co"># crop to the occupied area</span></span>
 <span></span>
-<span><span class="co">## Directional (bivariate-Gaussian) variant. The directional kernel is</span></span>
-<span><span class="co">## elongated, so it needs a slightly larger `ext` to fit the raster.</span></span>
+<span><span class="co">## Directional (bivariate-Gaussian) variant. Its kernel reaches further</span></span>
+<span><span class="co">## along the direction of travel, so a larger `ext_factor` pads the grid</span></span>
+<span><span class="co">## more; a grid too small for the bridges is enlarged automatically.</span></span>
 <span><span class="va">var_d</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/mt_dbgb_variance.html">mt_dbgb_variance</a></span><span class="op">(</span><span class="va">leroy</span>, location_error <span class="op">=</span> <span class="fl">25</span>, window_size <span class="op">=</span> <span class="fl">31</span>, margin <span class="op">=</span> <span class="fl">7</span><span class="op">)</span></span>
-<span><span class="va">ud_d</span>  <span class="op">&lt;-</span> <span class="fu"><a href="reference/mt_dbgb_ud.html">mt_dbgb_ud</a></span><span class="op">(</span><span class="va">var_d</span>, dim_size <span class="op">=</span> <span class="fl">600</span>, ext <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span>
+<span><span class="va">ud_d</span>  <span class="op">&lt;-</span> <span class="fu"><a href="reference/mt_dbgb_ud.html">mt_dbgb_ud</a></span><span class="op">(</span><span class="va">var_d</span>, dim_size <span class="op">=</span> <span class="fl">600</span>, ext_factor <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span>
 <span><span class="va">vol_d</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ud_volume.html">ud_volume</a></span><span class="op">(</span><span class="va">ud_d</span><span class="op">)</span></span>
 <span><span class="va">vol_d</span><span class="op">[</span><span class="va">vol_d</span><span class="op">[</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">0.99</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
 <span><span class="va">vol_d</span> <span class="op">&lt;-</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/trim.html" class="external-link">trim</a></span><span class="op">(</span><span class="va">vol_d</span><span class="op">)</span></span>
@@ -254,93 +255,93 @@
 <col width="37%">
 <col width="62%">
 </colgroup>
-<thead><tr>
+<thead><tr class="header">
 <th>Task</th>
 <th>Function</th>
 </tr></thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>Estimate dynamic motion variance</td>
 <td>
 <code><a href="reference/mt_dbbmm_variance.html">mt_dbbmm_variance()</a></code> / <code><a href="reference/mt_dbgb_variance.html">mt_dbgb_variance()</a></code>
 </td>
 </tr>
-<tr>
+<tr class="even">
 <td>Compute a utilisation distribution</td>
 <td>
 <code><a href="reference/mt_dbbmm_ud.html">mt_dbbmm_ud()</a></code> / <code><a href="reference/mt_dbgb_ud.html">mt_dbgb_ud()</a></code>
 </td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Flag corridor segments</td>
 <td><code><a href="reference/mt_corridor.html">mt_corridor()</a></code></td>
 </tr>
-<tr>
+<tr class="even">
 <td><strong>One-call outlier cleanup</strong></td>
 <td><code><a href="reference/mt_clean_track.html">mt_clean_track()</a></code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Post-run health check on <code><a href="reference/mt_clean_track.html">mt_clean_track()</a></code> output</td>
 <td><code><a href="reference/mt_diagnose_clean_track.html">mt_diagnose_clean_track()</a></code></td>
 </tr>
-<tr>
+<tr class="even">
 <td>Geometric per-fix outlier detection (leverage-immune)</td>
 <td><code><a href="reference/mt_flag_outliers_bridge.html">mt_flag_outliers_bridge()</a></code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Geometric, time-insensitive (path/displacement ratio)</td>
 <td><code><a href="reference/mt_flag_outliers_detour.html">mt_flag_outliers_detour()</a></code></td>
 </tr>
-<tr>
+<tr class="even">
 <td>Probabilistic per-fix outlier detection</td>
 <td><code><a href="reference/mt_flag_outliers.html">mt_flag_outliers()</a></code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Step-level impossible-speed outlier detection</td>
 <td><code><a href="reference/mt_flag_speed_cap.html">mt_flag_speed_cap()</a></code></td>
 </tr>
-<tr>
+<tr class="even">
 <td>Iterative speed peel for coherent multi-fix error clusters</td>
 <td><code><a href="reference/mt_peel_speed.html">mt_peel_speed()</a></code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Allometric physiological speed cap from <code>(mass, mode)</code>
 </td>
 <td><code><a href="reference/v_phys_estimate.html">v_phys_estimate()</a></code></td>
 </tr>
-<tr>
+<tr class="even">
 <td>Inspect a track’s speed distribution and suggest a cap</td>
 <td><code><a href="reference/mt_suggest_speed_cap.html">mt_suggest_speed_cap()</a></code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Classify the <em>kind</em> of error at each flagged location (directional residual)</td>
 <td><code>mt_flag_outliers_bridge(method = "directional")</code></td>
 </tr>
-<tr>
+<tr class="even">
 <td>State-aware bridge primitive with per-axis envelope rule + <code>bridge_z_class</code> taxonomy</td>
 <td><code><a href="reference/mt_flag_outliers_dbgb.html">mt_flag_outliers_dbgb()</a></code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Isotropic state-aware bridge primitive (faster; one Z channel)</td>
 <td><code><a href="reference/mt_flag_outliers_dbbmm.html">mt_flag_outliers_dbbmm()</a></code></td>
 </tr>
-<tr>
+<tr class="even">
 <td>Sequential scan from confirmed-good fixes (alternative strategy)</td>
 <td><code><a href="reference/mt_sequential_outliers.html">mt_sequential_outliers()</a></code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Majority vote across gap / entropy / sequential strategies</td>
 <td><code><a href="reference/mt_combined_outliers.html">mt_combined_outliers()</a></code></td>
 </tr>
-<tr>
+<tr class="even">
 <td>Per-flag confidence via multi-scale persistence (cascade or any flagger)</td>
 <td><code><a href="reference/mt_persistence_score.html">mt_persistence_score()</a></code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Short track with a longer clean reference</td>
 <td><code>mt_flag_outliers(x, reference = long)</code></td>
 </tr>
-<tr>
+<tr class="even">
 <td>Pre-cleaning: drop fixes with bad GPS geometry</td>
 <td><code><a href="reference/mt_filter_gps_quality.html">mt_filter_gps_quality()</a></code></td>
 </tr>
@@ -482,7 +483,7 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="NEWS.html"><img src="https://img.shields.io/badge/version-0.4.5-blue.svg" alt="version"></a></li>
+<li><a href="NEWS.html"><img src="https://img.shields.io/badge/version-0.4.6-blue.svg" alt="version"></a></li>
 <li><a href="https://www.gnu.org/licenses/gpl-3.0" class="external-link"><img src="https://img.shields.io/badge/license-GPL%20(%3E%3D%203)-blue.svg" alt="License: GPL (&gt;= 3)"></a></li>
 <li><a href="https://www.r-project.org/" class="external-link"><img src="https://img.shields.io/badge/R-%3E%3D%204.5.0-blue.svg" alt="R &gt;= 4.5.0"></a></li>
 </ul>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">move2utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,6 +59,32 @@
       <small>Source: <a href="https://github.com/move2universe/move2utils/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.6" id="move2utils-046--ud-grids-that-are-always-large-enough">move2utils 0.4.6 — UD grids that are always large enough<a class="anchor" aria-label="anchor" href="#move2utils-046--ud-grids-that-are-always-large-enough"></a></h2>
+<p>Applies to <code><a href="../reference/mt_dbbmm_ud.html">mt_dbbmm_ud()</a></code> and <code><a href="../reference/mt_dbgb_ud.html">mt_dbgb_ud()</a></code> alike.</p>
+<p><strong>An automatic grid is now always large enough.</strong> The kernels (ported from <code>move</code>) spread each bridge time step over 4 (dBBMM) or 5 (dBGB) standard deviations and stopped with “grid not large enough” when that window left the grid. The default <code>ext = 0.5</code> failed on the package’s own bundled data: the fisher worked example, and the help-page examples. A new internal C routine walks the kernels’ time steps with their own arithmetic, without the densities, and the grid is checked before a kernel runs. If the grid from <code>ext_factor</code> is large enough it is used <strong>unchanged, so results are bit-identical to 0.4.5</strong>. If not, it is enlarged: with <code>res</code> the cell size holds and cells are added; with <code>dim_size</code> the longest side keeps that many cells and the cells grow. With <code>verbose = TRUE</code>, the default, a message (class <code>move2utils_ud_grid_enlarged</code>) says so; this message is new output on calls that enlarge. The kernels’ arithmetic is unchanged; the dBGB kernel gains a segment mask (see the masking fix below).</p>
+<p><strong>A memory-safety defect inherited from <code>move</code> can no longer be reached.</strong> The kernels rejected a window only when it went <em>more</em> than one cell past the last row or column, but looped one cell further than they checked. At exactly one cell they read past the grid-coordinate vectors and wrote past the output matrix (in y, into the top cell of the neighbouring column). Because the kernels stop only at the first offending time step, a call that ended in the grid error could already have written out of bounds: on the bundled fisher data, a sequence of 0.4.5 calls ending in that error aborted R with <code>malloc(): invalid size</code>. Such a grid is now treated as too small. These calls, and dBGB UDs with masked segments (below), are the only ones whose results differ from 0.4.5.</p>
+<p><strong><code><a href="../reference/mt_mask_segments.html">mt_mask_segments()</a></code> on dBGB now drops the masked bridge, as on dBBMM.</strong> Masking segment <code>i</code> is documented to drop the bridge from fix <code>i</code> to fix <code>i + 1</code>. For dBBMM it did. For dBGB the kernel input was instead subset to <code>seg_interest</code>, which dropped fix <code>i</code> itself and bridged fix <code>i - 1</code> to fix <code>i + 1</code>: masking a long gap replaced it with a longer bridge across it and raised the UD there (on the fisher M1 track, masking the 19 gaps over 5 h raised the UD at their midpoints from 0.029 to 0.041). The dBGB kernel now takes a segment mask, as the dBBMM kernel always has, and every fix whose variance window is fully covered stays in. The same holds for setting <code>seg_interest</code> directly. Unmasked dBGB UDs are bit-identical to 0.4.5.</p>
+<p><strong>Templates are never enlarged.</strong> A <code>SpatRaster</code> passed as <code>raster</code> that is too small stops with an error (class <code>move2utils_ud_raster_too_small</code>) naming the sides. When the template is in the CRS the computation runs in, the error also gives the <code>terra::extend(..., snap = "out")</code> call that fixes it; for a template in another CRS it does not, because coordinates in the compute CRS would not apply to it.</p>
+<p><strong>Grid size is capped.</strong> A grid built from <code>res</code> or <code>dim_size</code> may have at most <code>getOption("move2utils.ud_max_cells", 1e8)</code> cells (about 800 MB per layer), whether or not it is enlarged; above that the call stops before anything is allocated (class <code>move2utils_ud_grid_too_large</code>) and suggests a larger <code>res</code> or a smaller <code>dim_size</code>. This catches a large variance growing an enlarged <code>res</code> grid, and also a mistyped <code>res</code> (e.g. <code>res = 1</code> on a long track). Templates are not capped.</p>
+<p><strong>Grid arguments, aligned with <code>terra</code>.</strong></p>
+<ul><li>New <code>res</code>: the cell size (square cells).</li>
+<li>Exactly one of <code>raster</code> (template), <code>res</code> and <code>dim_size</code> may be given; more than one is an error, as <code>move</code>’s method dispatch made it. <code>dim_size</code> now defaults to <code>NULL</code>, meaning 100 when neither of the others is given.</li>
+<li>
+<code>ext</code> is renamed <code>ext_factor</code>, because in <code>terra</code> <code>ext</code> denotes an extent. Passing a <code>SpatExtent</code> to either is an error that explains the difference.</li>
+<li>
+<strong>Deprecated, still working:</strong> <code>ext =</code> (use <code>ext_factor</code>) and a number passed as <code>raster</code> (use <code>res</code>). Both warn with class <code>move2utils_deprecated</code> and give identical results.</li>
+<li>
+<strong>Now an error:</strong> combining a template or a numeric <code>raster</code> with an explicit <code>dim_size</code>. In 0.4.5 <code>dim_size</code> was silently ignored there.</li>
+<li>
+<strong>Also an error now, where the kernels misbehaved in 0.4.5:</strong> a grid with fewer than two rows or columns (the kernels read past the grid coordinates), fewer than two fixes (no bridge of interest, for dBGB), and a <code>time_step</code> that is not positive (the kernels never ended).</li>
+<li>
+<strong>Stricter validation, also new errors:</strong> <code>ext_factor</code> must be a single non-negative finite number; <code>dim_size</code> a single whole number of at least 2 (at least 3 when the grid has to be enlarged); <code>res</code> a single positive number; <code>raster</code> a SpatRaster or <code>NULL</code>.</li>
+<li>Templates passed to the multi-track (list) methods are now checked against every track. The zero-mass error no longer suggests that <code>ext</code> may be too large.</li>
+</ul><p><strong>Documentation.</strong> Both help pages gain the sections “Grid” and “Coming from move” (argument mapping, the differing defaults, and measured agreement). The header of <code>test-move-parity-dbbmm-ud.R</code> claimed machine-precision agreement with <code>move</code>; it now states what was measured (UD kernel within 3e-9 relative given the same variance; end to end about 9e-8 relative, from optimiser tolerance in the variance step).</p>
+<p><strong>Help-page examples run.</strong> 28 of 30 help pages wrapped their examples in <code>\dontrun</code>, so <code>R CMD check</code> ran none of them, and 16 failed when run (Movebank pseudo-code, undefined objects, data with empty geometries or repeated timestamps, an exact EMD that ran for minutes). All are rewritten on data shipped with <code>move2</code> or with this package and run in about 38 s in all; <code>R CMD check --as-cran</code> now runs every one. The <code>UD_bursted_uds</code> vignette’s split-and-iterate idiom, which stopped with a grid error, now takes its common grid from the list method. Help pages no longer point to files that are not part of the package.</p>
+<p><strong><code>R CMD check</code> WARNING fixed.</strong> The list and variance-object methods of <code><a href="../reference/mt_dbbmm_ud.html">mt_dbbmm_ud()</a></code> and <code><a href="../reference/mt_dbgb_ud.html">mt_dbgb_ud()</a></code> now take <code>location_error_na</code>, as their generics do (S3 generic/method consistency). As documented, it is ignored there: the variance object already carries the imputed vector.</p>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.5" id="move2utils-045--cleaned-track-return-no-longer-carries-flag-columns">move2utils 0.4.5 — cleaned-track return no longer carries flag columns<a class="anchor" aria-label="anchor" href="#move2utils-045--cleaned-track-return-no-longer-carries-flag-columns"></a></h2>
 <p><code>mt_clean_track(x)</code> with the default <code>remove = TRUE</code> now returns <strong>only the caller’s original columns</strong> (minus the flagged rows). The cascade’s annotation columns (<code>is_outlier</code>, <code>flagged_by_*</code>, <code>loglr_*</code>, <code>combined_evidence</code>, <code>block_id</code>, <code>error_class</code>, <code>flag_iteration</code>) are no longer attached to the removed-rows return.</p>
@@ -158,7 +184,7 @@
 <p><strong><code><a href="../reference/mt_corridor.html">mt_corridor()</a></code> rewrite</strong> — projection-agnostic (handles both longlat and projected input), track-aware (via <code><a href="https://bartk.gitlab.io/move2/reference/mt_segments.html" class="external-link">mt_segments()</a></code>, so multi-track inputs never produce cross-track segments), handles empty geometries with <code>NA</code>-padding, and uses <code><a href="https://bartk.gitlab.io/move2/reference/mt_aeqd_crs.html" class="external-link">mt_aeqd_crs()</a></code> internally for the longlat-to-metric transform. Thresholds are user-supplied numbers (the legacy <code>speed_quantile = 0.75</code> / <code>circ_quantile = 0.25</code> quantile fallback is preserved but now emits a warning naming the resolved numeric). <code>corridor_azimuth</code> is now in degrees (matching the docstring; the previous implementation stored radians). Drops the <code>circular</code> and <code>geosphere</code> package dependencies in this code path. See <code><a href="../reference/mt_corridor.html">?mt_corridor</a></code> and the rewritten <code><a href="../articles/corridor.html">vignette("corridor")</a></code> for the new idioms.</p>
 <p><strong><code>mt_clean_track(state = ...)</code> no longer crashes on degenerate state subsets.</strong> When cleaning is dispatched by behavioural state, each state value is cleaned on its own subset. Small or stationary subsets exposed two crashes in the probability detector, both surfaced (not caused) by the 0.3.3 propagation fix that made the gap-based threshold the effective default prob path:</p>
 <ul><li>A subset with too few valid probabilities falls back from gap/entropy/significance to the percentile method. The fallback carried the originating method’s threshold — which may be <code>NULL</code> (deferred to a leaf formal) or a gap-spacing multiple, neither a percentile fraction — into <code>100 - threshold * 100</code>, producing a zero-length flag vector and then <code>replacement has length zero</code>. The percentile branch now coerces any non-<code>(0, 1]</code> value to the percentile default and guards against an empty probability set.</li>
-<li>An all-stationary subset (repeated positions, every step length <code>0</code>) drove the internal <code>(turn, step)</code> histogram to a terra raster with a zero-height <code>ymin == ymax</code> extent (<code>[rast,missing] invalid extent</code>). <code>.turn_step_hist()</code> now returns <code>NULL</code> on degenerate input (no positive step length or no valid turn angle) and the caller treats that as “no kinematic signal” (those fixes are kept).</li>
+<li>An all-stationary subset (repeated positions, every step length <code>0</code>) drove the internal <code>(turn, step)</code> histogram to a terra raster with a zero-height <code>ymin == ymax</code> extent (<code>[rast,missing] invalid   extent</code>). <code>.turn_step_hist()</code> now returns <code>NULL</code> on degenerate input (no positive step length or no valid turn angle) and the caller treats that as “no kinematic signal” (those fixes are kept).</li>
 </ul><p>Single-state cleaning was unaffected (a full track almost never has fewer than ten valid probabilities). Regression tests cover both the internal helpers and the end-to-end multistate path.</p>
 </div>
     <div class="section level2">
@@ -359,27 +385,27 @@
 <p><strong>New parameter <code>pre_peel_aux = c("none", "primitives")</code></strong> on <code><a href="../reference/mt_clean_track.html">mt_clean_track()</a></code>. Default <code>"none"</code> preserves the symmetric pre-peel behaviour exactly. Setting <code>pre_peel_aux = "primitives"</code> runs <code><a href="../reference/mt_flag_outliers_bridge.html">mt_flag_outliers_bridge()</a></code> and <code><a href="../reference/mt_flag_outliers_detour.html">mt_flag_outliers_detour()</a></code> once on the raw input, builds a per-fix auxiliary score by rank-normalising and summing their magnitudes, and passes it to <code><a href="../reference/mt_peel_speed.html">mt_peel_speed()</a></code>’s <code>aux_scores</code> argument. The peel then flags only the higher-scoring endpoint per offending edge instead of both endpoints — sparing clean neighbours of 1-fix spikes.</p>
 <p><strong>Empirical motivation</strong> (<code>CASCADE_AUDIT_2026-05-11.md</code> Section 6.1): the symmetric pre-peel removes the spike <em>and</em> its two clean neighbours on every 1-fix-spike pattern; round-3 <a href="https://github.com/move2universe/move2utils/issues/1" class="external-link">#1</a> demonstrated that asymmetric peel rescues those neighbours when an aux score discriminates them from the spike. Wiring the aux into <code><a href="../reference/mt_clean_track.html">mt_clean_track()</a></code>’s pre-peel closes the structural gap that round-3 <a href="https://github.com/move2universe/move2utils/issues/1" class="external-link">#1</a> had only addressed at the primitive level.</p>
 <p><strong>CPF benchmark with mass-mode = (1.0 kg, “flying”)</strong>:</p>
-<table class="table"><thead><tr><th>Track</th>
+<table class="table"><thead><tr class="header"><th>Track</th>
 <th>symmetric F1</th>
 <th>asymmetric F1</th>
 <th>ΔF1</th>
-</tr></thead><tbody><tr><td>CPF_A</td>
+</tr></thead><tbody><tr class="odd"><td>CPF_A</td>
 <td>0.885</td>
 <td><strong>0.958</strong></td>
 <td><strong>+0.074</strong></td>
-</tr><tr><td>CPF_C</td>
+</tr><tr class="even"><td>CPF_C</td>
 <td>1.000</td>
 <td>1.000</td>
 <td>0</td>
-</tr><tr><td>CPF_D</td>
+</tr><tr class="odd"><td>CPF_D</td>
 <td>0.674</td>
 <td><strong>0.789</strong></td>
 <td><strong>+0.115</strong></td>
-</tr><tr><td>CPF_E</td>
+</tr><tr class="even"><td>CPF_E</td>
 <td>0.994</td>
 <td>0.994</td>
 <td>0</td>
-</tr><tr><td>CPF_F</td>
+</tr><tr class="odd"><td>CPF_F</td>
 <td>0.533</td>
 <td>0.533</td>
 <td>0</td>
@@ -437,39 +463,39 @@
 <div class="section level4">
 <h4 id="class-aware-vs-strict-head-to-head-on-every-cpf-track-cascade_audit_2026-0-2-0">Class-aware vs strict head-to-head on every CPF track (CASCADE_AUDIT_2026-05-11 §5)<a class="anchor" aria-label="anchor" href="#class-aware-vs-strict-head-to-head-on-every-cpf-track-cascade_audit_2026-0-2-0"></a></h4>
 <p>The 2026-05-11 cascade orchestrator audit measured F1 on each CPF track under the new <code>class_aware</code> default and the four <code>legacy_strict</code> sub-modes. The headline finding is that <code>class_aware</code> is <strong>structurally necessary</strong> on at least one CPF pattern, not stylistic:</p>
-<table style="width:100%;" class="table"><colgroup><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"></colgroup><thead><tr><th>Strategy</th>
+<table style="width:100%;" class="table"><colgroup><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"></colgroup><thead><tr class="header"><th>Strategy</th>
 <th>CPF_A</th>
 <th>CPF_C</th>
 <th>CPF_D</th>
 <th>CPF_E</th>
 <th>CPF_F</th>
-</tr></thead><tbody><tr><td>
+</tr></thead><tbody><tr class="odd"><td>
 <strong>class_aware</strong> (default)</td>
 <td><strong>0.958</strong></td>
 <td><strong>1.000</strong></td>
 <td><strong>0.674</strong></td>
 <td><strong>0.994</strong></td>
 <td><strong>0.533</strong></td>
-</tr><tr><td>legacy_strict (0.1.x)</td>
+</tr><tr class="even"><td>legacy_strict (0.1.x)</td>
 <td>0.958</td>
 <td>1.000</td>
 <td>0.674</td>
 <td>
 <strong>0.140</strong> ⚠</td>
 <td>0.533</td>
-</tr><tr><td>legacy_strict, majority</td>
+</tr><tr class="odd"><td>legacy_strict, majority</td>
 <td>0.920</td>
 <td>1.000</td>
 <td>0.674</td>
 <td>0.976</td>
 <td>0.035</td>
-</tr><tr><td>legacy_strict, speed_trusted</td>
+</tr><tr class="even"><td>legacy_strict, speed_trusted</td>
 <td>0.807</td>
 <td>0.727</td>
 <td>0.667</td>
 <td>0.140</td>
 <td>0.015</td>
-</tr><tr><td>legacy_strict, any</td>
+</tr><tr class="odd"><td>legacy_strict, any</td>
 <td>0.123</td>
 <td>0.190</td>
 <td>0.161</td>
@@ -481,19 +507,19 @@
 <div class="section level4">
 <h4 id="cohort-verification-synthetic-truth-proxy-on-saline-cascade_audit_2026-0-2-0">Cohort verification: synthetic-truth proxy on Saline (CASCADE_AUDIT_2026-05-11 §3.2.1)<a class="anchor" aria-label="anchor" href="#cohort-verification-synthetic-truth-proxy-on-saline-cascade_audit_2026-0-2-0"></a></h4>
 <p>On real cohort tracks ground truth doesn’t exist, so a flag-fraction shift from 0.1.x to 0.2.0 is interpretive on its own. The audit removed the ambiguity for the Saline (homing pigeon) track by injecting 25 controlled synthetic spikes and running both flagging strategies under the SAME working-tree code (isolating the strategy change from any other 0.1.1 → 0.2.0 drift):</p>
-<table style="width:100%;" class="table"><colgroup><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"></colgroup><thead><tr><th>Strategy</th>
+<table style="width:100%;" class="table"><colgroup><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"></colgroup><thead><tr class="header"><th>Strategy</th>
 <th>n_flag</th>
 <th>TP</th>
 <th>FP</th>
 <th>FN</th>
 <th>F1</th>
-</tr></thead><tbody><tr><td>class_aware / auto-cap</td>
+</tr></thead><tbody><tr class="odd"><td>class_aware / auto-cap</td>
 <td>47</td>
 <td>25</td>
 <td>22</td>
 <td>0</td>
 <td><strong>0.694</strong></td>
-</tr><tr><td>legacy_strict + strict / auto-cap (0.1.x default)</td>
+</tr><tr class="even"><td>legacy_strict + strict / auto-cap (0.1.x default)</td>
 <td>98</td>
 <td>25</td>
 <td>73</td>
@@ -559,7 +585,7 @@
 <li><p><code><a href="../reference/mt_diagnose_clean_track.html">mt_diagnose_clean_track()</a></code> — post-run diagnostic suite for <code><a href="../reference/mt_clean_track.html">mt_clean_track()</a></code> results, analogous to <code>plot.lm()</code> for a GLM. Six panels: log-speed density with detected modes and the v_max used; rolling flag rate over time; per-detector activity counts; cumulative flagging by iteration; consecutive-flag run-length histogram; per-individual flag-rate dotplot for multi-track results. Auto-prints concerns it identifies (multi-mode behaviour, sustained migration band, single-detector dominance, non-converging iteration, heavy run-length tail) with actionable verdicts pointing the user at remedies. Companion vignette <code>vignette("diagnose_clean_track")</code> walks through the panels on a contrasted PASS / OVER_FLAG pair.</p></li>
 <li><p><code><a href="../reference/mt_flag_outliers_dbbmm.html">mt_flag_outliers_dbbmm()</a></code> — new (work-in-progress) state-aware companion to <code><a href="../reference/mt_flag_outliers_bridge.html">mt_flag_outliers_bridge()</a></code>. Normalises the Brownian-bridge residual by the local Brownian motion variance from <code><a href="../reference/mt_dbbmm_variance.html">mt_dbbmm_variance()</a></code> / <code><a href="../reference/mt_dbgb_variance.html">mt_dbgb_variance()</a></code>. The resulting Z-score follows Rayleigh(1) under the bridge null, so the threshold is principled (Bonferroni FWER = 0.05 by default). Targets the documented multi-state failure mode the legacy bridge primitive exhibits on tracks with mixed behavioural states. Trade-off: gains state-awareness, exposes the leverage problem (extreme outliers inflate sigma^2 then bound their own Z); mitigated via <code>pre_peel_v_max</code> parameter. Not yet wired into <code><a href="../reference/mt_clean_track.html">mt_clean_track()</a></code>.</p></li>
 <li><p><code><a href="../reference/mt_suggest_dbbmm_window.html">mt_suggest_dbbmm_window()</a></code> — new exported diagnostic helper that inspects a track’s temporal sampling and suggests <code>window_size</code> and <code>margin</code> for <code><a href="../reference/mt_dbbmm_variance.html">mt_dbbmm_variance()</a></code> / <code><a href="../reference/mt_dbgb_variance.html">mt_dbgb_variance()</a></code>. Picks <code>window_size</code> as the nearest odd integer covering a user-specified target time per window (default 4 h), clamped to the literature floor of 11 and to <code>floor(n/4)</code> so several non-overlapping windows fit in the track. Multi-track aware; prints summary and optionally plots the time-lag distribution. Returns an <code>mt_dbbmm_window_suggestion</code> S3 with <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> method.</p></li>
-<li><p><code>mt_flag_outliers_bridge(obs_error = ...)</code> — new parameter ingesting per-fix observation-error priors at the bridge anchors. Accepts a numeric scalar (uniform sigma in m), a per-fix vector, a column name (e.g. <code>"eobs_horizontal_accuracy_estimate"</code>), or <code>"auto"</code> to probe Movebank quality columns and the Argos location-class table (Vincent et al. 2002 ladder). The bridge denominator absorbs anchor variance via <code>w_eff^2 = w^2 + (w_p^2 sigma_prev^2 + w_n^2 sigma_next^2) / S_hat</code>, where <code>S_hat = median(r^2/w^2)</code> is a distribution-free empirical residual scale estimated on the active mask in iteration 1. The target fix’s own sigma deliberately does not enter, preserving leverage immunity. Most useful on Argos / mixed-mode tracks where per-fix accuracy varies by orders of magnitude. New diagnostic column <code>bridge_obs_inflation = w_eff/w</code> (== 1 when injection is off or all anchors have unknown sigma). <code>mt_clean_track(obs_error = ...)</code> forwards through to the bridge primitive. Default <code>NULL</code> preserves existing behaviour.</p></li>
+<li><p><code>mt_flag_outliers_bridge(obs_error = ...)</code> — new parameter ingesting per-fix observation-error priors at the bridge anchors. Accepts a numeric scalar (uniform sigma in m), a per-fix vector, a column name (e.g. <code>"eobs_horizontal_accuracy_estimate"</code>), or <code>"auto"</code> to probe Movebank quality columns and the Argos location-class table (Vincent et al. 2002 ladder). The bridge denominator absorbs anchor variance via <code>w_eff^2 = w^2 + (w_p^2 sigma_prev^2 + w_n^2 sigma_next^2)   / S_hat</code>, where <code>S_hat = median(r^2/w^2)</code> is a distribution-free empirical residual scale estimated on the active mask in iteration 1. The target fix’s own sigma deliberately does not enter, preserving leverage immunity. Most useful on Argos / mixed-mode tracks where per-fix accuracy varies by orders of magnitude. New diagnostic column <code>bridge_obs_inflation = w_eff/w</code> (== 1 when injection is off or all anchors have unknown sigma). <code>mt_clean_track(obs_error = ...)</code> forwards through to the bridge primitive. Default <code>NULL</code> preserves existing behaviour.</p></li>
 <li><p><code><a href="../reference/mt_peel_speed.html">mt_peel_speed()</a></code> — new exported primitive for iterative speed peel at a user-supplied physiological cap. Removes fixes with <code>max(step_in, step_out) &gt; v_max</code>, recomputes step speeds on the survivor set, and repeats until convergence. Catches coherent multi-fix error clusters (e.g. GPS spoofs with internally-consistent fake trajectories) that per-fix detectors cannot resolve, because peeling a boundary fix exposes the next interior fix as a new boundary with an impossible step speed. Fully vectorised; multi-track dispatch; auto-projection for longitude/latitude input. Adds <code>is_outlier</code>, <code>peel_iteration</code>, <code>step_speed</code> columns and attributes <code>v_max_used</code>, <code>n_peel_iterations</code>, <code>converged</code>.</p></li>
 <li><p><code>v_phys_estimate(mass, mode)</code> — new exported helper. Returns a body-mass / locomotor-mode estimate of the species’ physiological maximum burst speed using the Hirt et al. (2017, <em>Nat. Ecol. Evol.</em>, <a href="doi:10.1038/s41559-017-0241-4" class="uri">doi:10.1038/s41559-017-0241-4</a>) general scaling law. Mode is one of <code>"flying"</code>, <code>"running"</code>, <code>"swimming"</code>. Output is a printable scalar in m/s with a parameter-uncertainty confidence interval propagated from the published parameter standard errors via the delta method. Designed to be passed directly into <code><a href="../reference/mt_clean_track.html">mt_clean_track()</a></code> as the principled <code>v_max</code> default when no species-specific published maximum is at hand.</p></li>
 <li><p><code><a href="../reference/mt_clean_track.html">mt_clean_track()</a></code> — new <code>state =</code> parameter for state-conditional cleaning. Accepts <code>NULL</code> (default; current behaviour), a column name on the move2 object, or a per-fix vector. Partitions each track into contiguous runs of constant state and runs the full pipeline independently on each segment, so the per-fix detectors see a single kinematic distribution per segment (avoids the “cut between modes vs. cut beyond modes” tradeoff on multi-state tracks). Segments shorter than 3 fixes pass through unflagged; <code>NA</code> is treated as its own state value. Segment-local <code>block_id</code>s are renumbered globally on recombination. The package’s contract is to <em>respect</em> user-supplied state labels — segmentation itself (speed-threshold, HMM, BCPA, manual annotation) is the user’s responsibility, with worked examples in the rewritten <code>state_conditional</code> vignette.</p></li>
