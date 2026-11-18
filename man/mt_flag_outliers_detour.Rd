@@ -100,7 +100,8 @@ fixes where the window cannot fit.}
 vs not, in nat units (surprisal \code{log(detour_ratio)} minus
 the detector's own flag boundary); \code{> 0} where flagged,
 \code{NA} where there is no detour geometry (ratio \eqn{\le} 1).
-See \code{DESIGN_evidence_accumulation.md}.}
+See \code{\link{mt_flag_consensus}} for how these columns are
+combined.}
 }
 }
 \description{
@@ -153,14 +154,15 @@ primitive plays the same gating role, so \code{min_leg = 0} is
 usually fine in that context.
 }
 \examples{
-\dontrun{
 library(move2)
-x <- movebank_download_study(study_id = 123)
-x <- mt_filter_gps_quality(x)
-out <- mt_flag_outliers_detour(x, k = 1, threshold = 5,
-                                min_leg = 5000)
+library(move2utils)
+## a simulated track with known errors, shipped with the package
+tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+                              package = "move2utils"))
+track <- filter_track_data(tracks, .track_id = "CPF_C")
+out <- mt_flag_outliers_detour(track, k = 1, threshold = 5,
+                               min_leg = 5000)
 table(out$is_outlier)
-}
 
 }
 \seealso{

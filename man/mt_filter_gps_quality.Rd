@@ -64,14 +64,16 @@ downstream detector, and their presence contaminates neighbour-
 based analyses. Set \code{drop_empty = FALSE} to keep them.
 }
 \examples{
-\dontrun{
 library(move2)
-## a GPS track downloaded from Movebank, carrying satellite-count /
-## DOP / horizontal-accuracy columns
-x <- movebank_download_study("Your study name", ...)
-x <- x[!sf::st_is_empty(x), ]
-x <- mt_filter_unique(x, criterion = "first")
-x <- mt_filter_gps_quality(x)
-}
+library(move2utils)
+## a simulated track with known errors, shipped with the package
+tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+                              package = "move2utils"))
+track <- filter_track_data(tracks, .track_id = "CPF_C")
+## the example data carry satellite-count and DOP columns, as Movebank
+## GPS data do
+nrow(track)
+track <- mt_filter_gps_quality(track)
+nrow(track)
 
 }

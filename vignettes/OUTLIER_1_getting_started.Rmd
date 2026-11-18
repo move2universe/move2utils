@@ -405,7 +405,7 @@ drop them before cleaning: `x <- x[!sf::st_is_empty(x), ]`.
 **Non-Movebank vendors.** If your columns differ from the Movebank names
 (Vectronic, Lotek, Telonics, Sirtrack, custom feeds), auto-detection
 won't find them and the cleaning runs in degraded mode (still works,
-without the extra information). A unified quality-column resolver is in
-design (`DESIGN_quality_columns.md`); for now, either rename the columns
+without the extra information). Until a resolver for other vendors'
+column names exists, either rename the columns
 to the Movebank names before cleaning, or pass per-fix quality functions
 directly via `mt_flag_outliers(quality_columns = list(...))`.

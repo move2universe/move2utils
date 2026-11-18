@@ -134,24 +134,27 @@
 #'           (\code{log(step_speed / cap)}); \code{> 0} above the cap.
 #'           Two-sided in the data-driven modes; one-sided (negative
 #'           clamped to 0) under \code{threshold_type = "hard"}, where a
-#'           slow step is no evidence.  See
-#'           \code{DESIGN_evidence_accumulation.md}.}
+#'           slow step is no evidence.  See \code{\link{mt_flag_consensus}}
+#'           for how these columns are combined.}
 #'   }
 #'   The value of the cap actually used is stored as the attribute
 #'   \code{"v_max_used"}.
 #'
 #' @examples
-#' \dontrun{
 #' library(move2)
+#' library(move2utils)
+#' ## a simulated track with known errors, shipped with the package
+#' tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+#'                               package = "move2utils"))
+#' track <- filter_track_data(tracks, .track_id = "CPF_C")
 #' ## data-driven (default); silent on unimodal speed distributions
-#' x <- mt_flag_speed_cap(x)
+#' x <- mt_flag_speed_cap(track)
 #'
 #' ## hard physiological cap: golden eagle documented top ~50 m/s
-#' x <- mt_flag_speed_cap(x, v_max = 50, threshold_type = "hard")
+#' x <- mt_flag_speed_cap(track, v_max = 50, threshold_type = "hard")
 #'
 #' ## diagnostic: inspect distribution + suggested cap without flagging
-#' v <- mt_suggest_speed_cap(x)
-#' }
+#' v <- mt_suggest_speed_cap(track)
 #'
 #' @seealso \code{\link{mt_suggest_speed_cap}} for a diagnostic-only
 #'   helper that returns the suggested value without modifying
@@ -755,8 +758,9 @@ mt_flag_speed_cap <- function(x,
 #' knowledge if the suggested value disagrees with species biology.
 #'
 #' @details
-#' K02-style spoof-boundary transitions produce speeds that sit in a
-#' yawning gap above the bulk of the distribution: on that track,
+#' The boundaries of a GPS-spoofing episode produce speeds that sit in a
+#' yawning gap above the bulk of the distribution: on one golden-eagle
+#' track with such an episode,
 #' 99.99\% of steps are below 32 m/s and the tail jumps directly to
 #' 209 m/s with nothing in between.  Any reasonable break-detector
 #' places the suggested cap in that gap.  When no such gap exists
@@ -830,13 +834,17 @@ mt_flag_speed_cap <- function(x,
 #'   invisibly when \code{plot = TRUE}.
 #'
 #' @examples
-#' \dontrun{
+#' library(move2)
+#' library(move2utils)
+#' ## a simulated track with known errors, shipped with the package
+#' tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+#'                               package = "move2utils"))
+#' track <- filter_track_data(tracks, .track_id = "CPF_C")
 #' v <- mt_suggest_speed_cap(track)
 #' if (!is.na(v)) track <- mt_flag_speed_cap(track, v_max = v)
 #'
 #' ## triangulate empirical, allometric and user estimates:
 #' mt_suggest_speed_cap(track, mass = 5, mode = "flying", v_max = 30)
-#' }
 #'
 #' @importFrom stats density quantile setNames
 #' @importFrom graphics abline axis hist par plot

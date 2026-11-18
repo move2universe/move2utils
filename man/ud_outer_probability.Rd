@@ -41,20 +41,18 @@ This is the move2 analogue of \code{move::outerProbability()}, and is a
 thin wrapper around \code{\link[=ud_volume]{ud_volume()}} + \code{\link[terra:extract]{terra::extract()}}.
 }
 \examples{
-\dontrun{
 library(move2)
+library(move2utils)
 library(sf)
 fishers <- mt_read(mt_example())
 fishers <- fishers[!st_is_empty(fishers), ]
-leroy <- fishers[mt_track_id(fishers) == "M4", ][seq_len(200), ]
-leroy <- st_transform(leroy, mt_aeqd_crs(leroy))
-
-ud <- mt_dbbmm_ud(leroy, location_error = 20, raster = 100)
+leroy <- filter_track_data(fishers, .track_id = "M1")
+leroy <- st_transform(leroy, mt_aeqd_crs(leroy))[seq_len(200), ]
+ud <- mt_dbbmm_ud(leroy, location_error = 20, res = 100)
 
 ## outer probability at every fix along the track
 op <- ud_outer_probability(leroy, ud)
 summary(op)
-}
 
 }
 \references{

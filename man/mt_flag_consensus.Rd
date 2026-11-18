@@ -156,8 +156,8 @@ columns they do not mention.
 \section{Consensus modes}{
 
 \describe{
-\item{\code{"class_aware"}}{The default prior to v0.4.0
-(round-4 audit, 2026-05-11); the current default is
+\item{\code{"class_aware"}}{The default prior to v0.4.0;
+the current default is
 \code{"evidence_corroborated"} (below). A fix is flagged if ANY
 of the following class rules fires:
 \itemize{
@@ -229,7 +229,7 @@ is an abstention (no evidence either way), \emph{not} evidence
 against. The combined score is returned as \code{combined_evidence}
 -- the single commensurable scalar behind the decision, and the
 substrate for an optional one-lever sensitivity control (a user
-threshold on that column). See \code{DESIGN_evidence_accumulation.md}.}
+threshold on that column).}
 \item{\code{"any"}}{Union of all detectors. Maximum recall,
 lowest precision.  Rarely the right choice for production
 pipelines.}
@@ -254,18 +254,26 @@ logical operations, \code{rowSums(flags)} for vote counts, etc.
 }
 
 \examples{
-\dontrun{
-# Default mode (evidence_corroborated) on a cleaned cascade output
-cleaned <- mt_clean_track(track)
-cleaned <- mt_flag_consensus(cleaned)   # same as mt_clean_track default
+library(move2)
+library(move2utils)
+## a simulated track with known errors, shipped with the package
+tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+                              package = "move2utils"))
+track <- filter_track_data(tracks, .track_id = "CPF_C")
+## the per-detector columns are kept only when nothing is removed
+cleaned <- mt_clean_track(track, remove = FALSE, plot = FALSE)
+
+# Default mode (evidence_corroborated), as in mt_clean_track()
+cleaned <- mt_flag_consensus(cleaned)
 
 # More conservative: require a geometric AND a kinematic confirmer
-cleaned <- mt_flag_consensus(cleaned, mode = "strict")
+strict <- mt_flag_consensus(cleaned, mode = "strict")
 
 # User-defined: bridge alone (geometric impossibility only)
-cleaned <- mt_flag_consensus(cleaned, mode = "custom",
-                             custom = function(b, p, s, d) b)
-}
+bridge_only <- mt_flag_consensus(cleaned, mode = "custom",
+                                 custom = function(b, p, s, d) b)
+c(default = sum(cleaned$is_outlier), strict = sum(strict$is_outlier),
+  bridge = sum(bridge_only$is_outlier))
 
 }
 \seealso{

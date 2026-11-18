@@ -20,24 +20,22 @@
 #'   names preserved. NA cells stay NA.
 #'
 #' @examples
-#' \dontrun{
 #' library(move2)
+#' library(move2utils)
 #' library(sf)
 #' fishers <- mt_read(mt_example())
 #' fishers <- fishers[!st_is_empty(fishers), ]
-#' leroy <- fishers[mt_track_id(fishers) == "M4", ][seq_len(200), ]
-#' leroy <- st_transform(leroy, mt_aeqd_crs(leroy))
-#'
-#' ud  <- mt_dbbmm_ud(leroy, location_error = 20, raster = 100)
+#' leroy <- filter_track_data(fishers, .track_id = "M1")
+#' leroy <- st_transform(leroy, mt_aeqd_crs(leroy))[seq_len(200), ]
+#' ud  <- mt_dbbmm_ud(leroy, location_error = 20, res = 100)
 #' vud <- ud_volume(ud)
 #'
-#' ## draw the 50% and 95% contours of the volume UD
+#' ## draw the 50\\% and 95\\% contours of the volume UD
 #' terra::plot(vud)
 #' terra::contour(vud, levels = c(0.5, 0.95), add = TRUE)
 #'
-#' ## solid 50% core-area mask
+#' ## solid 50\\% core-area mask
 #' core50 <- vud <= 0.5
-#' }
 #'
 #' @seealso [mt_dbbmm_ud()], [mt_dbgb_ud()] for computing UDs;
 #'   [terra::contour()] for isopleth extraction from a volume UD.

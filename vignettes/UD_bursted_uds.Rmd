@@ -133,8 +133,8 @@ names(var_list)
 ```
 
 ```{r ud-per-burst, fig.width = 9, fig.height = 6, fig.cap = "Day / night UDs for F1, F2, M1. Each panel is an Cumulative volume UD on a common grid, so the layers are directly comparable."}
-stk <- mt_dbbmm_ud(var_list, location_error = 25, raster = 100,
-                    ext = 0.85, verbose = FALSE)
+stk <- mt_dbbmm_ud(var_list, location_error = 25, res = 100,
+                    ext_factor = 0.85, verbose = FALSE)
 names(stk)
 vud <- ud_volume(stk)
 terra::plot(vud)
@@ -162,36 +162,38 @@ name: `stk[["F1__night"]]`.
 - **Common-grid discipline.** If you compare bursts visually or
   metrically (e.g. overlap), the multi-track dispatch already puts
   all layers on the same grid. If you mix outputs from separate
-  dispatches, pass a pre-made `SpatRaster` to each call.
+  dispatches, pass the same `SpatRaster` template to each call. A
+  template is never enlarged: take it from a list-method result (as in
+  Idiom B below), or extend it with the `terra::extend()` call that the
+  error message gives.
 
 ## Idiom B — `split()` and `lapply()`
 
-When each burst needs its own grid, resolution, or parameters, split
-the object explicitly and iterate.
+When each burst needs its own variance parameters, split the object
+explicitly and fit each burst on its own. Passing the list of variance
+objects to `mt_dbbmm_ud()` then puts them on one common grid, large
+enough for all of them.
 
 ```{r split-iterate, eval = FALSE}
-bursts <- split(focal, interaction(mt_track_id(focal),
-                                       focal$day_night,
-                                       drop = TRUE))
+## project once, so that every burst shares one coordinate system
+focal_p <- sf::st_transform(focal, mt_aeqd_crs(focal))
+bursts <- split(focal_p, interaction(mt_track_id(focal_p),
+                                     focal_p$day_night,
+                                     drop = TRUE))
 bursts <- bursts[sapply(bursts, nrow) >= 60]  # drop sparse bursts
 
 var_each <- lapply(bursts, mt_dbbmm_variance,
-                    location_error = 25,
-                    window_size    = 31,
-                    margin         = 11)
+                   location_error = 25,
+                   window_size    = 31,
+                   margin         = 11)
 
-## compute each UD on a common grid so they remain stackable
-all_xy <- do.call(rbind, lapply(var_each, function(v) {
-  data.frame(x = v$track_data$x, y = v$track_data$y)
-}))
-pts <- sf::st_as_sf(all_xy, coords = c("x", "y"),
-                     crs = var_each[[1]]$track_data$crs)
-grid <- move2utils:::.make_raster(pts, cell_size = 100, ext = 0.85)
+## the list method puts every burst on one grid, large enough for all,
+## so the layers remain stackable
+stk_b <- mt_dbbmm_ud(var_each, location_error = 25, res = 100,
+                     verbose = FALSE)
 
-ud_each <- lapply(var_each, mt_dbbmm_ud,
-                   location_error = 25, raster = grid, verbose = FALSE)
-stk_b <- terra::rast(ud_each)
-names(stk_b) <- names(bursts)
+## any layer is then a template for later UDs on the same grid
+grid <- stk_b[[1]]
 ```
 
 This pattern is also what you want when the context implies genuinely
@@ -211,7 +213,7 @@ Consider a commuting animal where day-time movement is foraging
 var_list_d <- mt_dbgb_variance(focal_burst, location_error = 25,
                                  window_size = 31, margin = 11)
 stk_d <- mt_dbgb_ud(var_list_d, location_error = 25,
-                     raster = 100, ext = 0.85)
+                     res = 100, ext_factor = 0.85)
 ```
 
 Contrast the parallel/perpendicular ratios across bursts via

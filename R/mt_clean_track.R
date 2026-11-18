@@ -151,8 +151,7 @@
 #'   without the corroboration safeguard), \code{"strict"},
 #'   \code{"majority"}, \code{"speed_trusted"}, \code{"any"},
 #'   \code{"custom"}.  See \code{\link{mt_flag_consensus}} for each mode
-#'   and \code{DESIGN_evidence_accumulation.md} for the evidence
-#'   framework.  The block-expansion step
+#'   and the evidence framework.  The block-expansion step
 #'   (when \code{expand_blocks = TRUE}) is independent of
 #'   \code{consensus} -- it identifies disconnected components
 #'   directly from the speed distribution, so coherent outlier blocks
@@ -197,14 +196,12 @@
 #'   integer caps iteration at that number of passes.
 #' @param max_iterations Integer.  Hard safety cap on iteration count
 #'   even with \code{iterations = "until_clean"}.  Default 100 is
-#'   EMPIRICALLY TUNED (CASCADE_AUDIT_2026-05-11.md Section 3.4 +
-#'   8): the iteration-count distribution across all audit tracks
-#'   tops out at 22 iter for legitimate convergence on CPF / cohort;
-#'   K02 (block contamination, auto-cap path) is the longest
-#'   documented legitimate convergence at 61 iter.  100 covers K02
-#'   with ~39-iter margin AND caps multi-state failure modes
-#'   (WH17-class tracks that never converge) at half the previous
-#'   wallclock.  Tracks that hit the cap return with
+#'   EMPIRICALLY TUNED: on the tracks used in development, legitimate
+#'   convergence took at most 22 iterations on the simulated and
+#'   cohort tracks, and 61 on a golden-eagle track with a block of
+#'   spoofed fixes.  100 leaves a margin of ~39 iterations AND caps
+#'   multi-state tracks that never converge at half the previous
+#'   wall-clock time.  Tracks that hit the cap return with
 #'   \code{convergence = "max_iterations"} -- a visible signal the
 #'   user can opt up via \code{max_iterations = 200L} (the previous
 #'   default) or higher.  Plausible range: 50--500.
@@ -232,16 +229,16 @@
 #'
 #'   The asymmetric mode is designed for tracks whose contamination
 #'   is dominated by 1-fix spikes whose clean neighbours the
-#'   symmetric default would peel along with the spike.  Empirical
-#'   benchmark (synthetic CPF, audit 2026-05-11): mean F1 +0.036,
+#'   symmetric default would peel along with the spike.  On the
+#'   simulated CPF tracks: mean F1 +0.036,
 #'   CPF_A F1 0.885 -> 0.958, CPF_D F1 0.674 -> 0.779, no losses.
 #'
 #'   \strong{Cluster-outlier caveat}.  On coherent multi-fix
-#'   contamination (sustained spoofs, deployment confusion blocks
-#'   like the K02 benchmark) the asymmetric peel can walk inward
-#'   from one boundary only or oscillate, producing false positives
-#'   at the cluster boundary.  Empirical (K02 benchmark, audit
-#'   2026-05-11): F1 0.776 (symmetric) -> 0.572 (asymmetric).  Use
+#'   contamination (sustained spoofs, deployment confusion blocks)
+#'   the asymmetric peel can walk inward from one boundary only or
+#'   oscillate, producing false positives at the cluster boundary.
+#'   On a golden-eagle track with a spoofing episode: F1 0.776
+#'   (symmetric) -> 0.572 (asymmetric).  Use
 #'   the default \code{"none"} on tracks with known cluster-shape
 #'   contamination.  See also \code{\link{mt_peel_speed}} -> Asymmetric
 #'   peel.
@@ -526,8 +523,8 @@
 #'     for (ii) anchors block expansion against true physiological
 #'     impossibility.  Collapsing (i) and (ii) into a single
 #'     user-overridable threshold reintroduces the over-flag failure
-#'     mode documented in the 2026-04-29 stratified Movebank audit
-#'     (homing pigeon racing flight over-flagged as anomaly relative
+#'     mode found in development on Movebank data (a homing
+#'     pigeon's racing flight over-flagged as anomaly relative
 #'     to the resting baseline).  Users who specifically want the
 #'     conjunction's speed flag to use the absolute cap should call
 #'     \code{\link{mt_flag_speed_cap}(threshold_type = "hard",
@@ -612,21 +609,19 @@
 #'   }
 #'
 #' @examples
-#' \dontrun{
 #' library(move2)
-#' x <- movebank_download_study(study_id = 123, ...)
-#' x <- mt_filter_gps_quality(x)
-#' x <- move2::mt_filter_unique(x, "first")
-#' x <- dplyr::arrange(x, mt_time(x))
-#'
-#' ## Default: return the cleaned track, ready for downstream analysis
-#' x_clean <- mt_clean_track(x, v_max = 50)
+#' library(move2utils)
+#' ## a simulated track with known errors, shipped with the package
+#' tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+#'                               package = "move2utils"))
+#' track <- filter_track_data(tracks, .track_id = "CPF_C")
+#' ## Default: return the cleaned track (and draw it)
+#' clean <- mt_clean_track(track)
 #'
 #' ## Inspection mode: keep all rows, see which were flagged and why
-#' x_with_flags <- mt_clean_track(x, v_max = 50, remove = FALSE)
-#' table(x_with_flags$is_outlier)
-#' head(x_with_flags[x_with_flags$is_outlier, ])
-#' }
+#' flags <- mt_clean_track(track, remove = FALSE, plot = FALSE)
+#' table(flags$is_outlier)
+#' head(flags[flags$is_outlier, ])
 #'
 #' @seealso The four primitives this function composes:
 #'   \code{\link{mt_flag_outliers_bridge}},

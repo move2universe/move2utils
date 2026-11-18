@@ -251,7 +251,7 @@
 #'       vs not, in nat units; \code{> 0} where flagged, \code{< 0} below
 #'       the boundary, \code{NA} where the detector abstains.  Same
 #'       convention as \code{loglr_prob}; see
-#'       \code{DESIGN_evidence_accumulation.md}.}
+#'       \code{\link{mt_flag_consensus}} for how these columns are combined.}
 #'     \item{\code{is_outlier}}{Logical flag.}
 #'     \item{\code{flagged_by_bridge}}{Logical. Same as
 #'       \code{is_outlier} for this primitive; named for parity with the
@@ -263,13 +263,15 @@
 #'   If \code{remove = TRUE}, the flagged rows are dropped.
 #'
 #' @examples
-#' \dontrun{
 #' library(move2)
-#' syn <- mt_read(system.file("extdata", "synthetic_tracks.csv.gz",
-#'                             package = "move2utils"))
+#' library(move2utils)
+#' ## a simulated track with known errors, shipped with the package
+#' tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+#'                               package = "move2utils"))
+#' track <- filter_track_data(tracks, .track_id = "CPF_C")
 #' ## any CRS works -- lon/lat is auto-projected internally
-#' result <- mt_flag_outliers_bridge(syn)
-#' }
+#' result <- mt_flag_outliers_bridge(track)
+#' table(result$is_outlier)
 #'
 #' @seealso \code{\link{mt_flag_outliers}} for movement-metric
 #'   detection; \code{\link{mt_combined_outliers}} for composing

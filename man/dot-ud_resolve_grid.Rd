@@ -14,9 +14,11 @@ warp, lossless -- the "suitable CRS" fast path); otherwise the result is
 warped onto the target at the end.  An explicit template in another CRS is
 reprojected into the compute CRS for the kernel and the result is warped
 back onto the template's exact grid.  Returns \code{list(grid, warp_to)} where
-\code{warp_to} is a SpatRaster template, a CRS, or NULL (no warp needed).}
+\code{warp_to} is a SpatRaster template, a CRS, or NULL (no warp needed).
+A template is checked against the kernel windows of \code{kins} and never
+enlarged; an automatic grid is built large enough (\code{.ud_auto_grid()}).}
 \usage{
-.ud_resolve_grid(raster, td, target_crs, restore, dim_size, ext)
+.ud_resolve_grid(grid_args, kins, td, target_crs, restore, verbose = FALSE)
 }
 \description{
 Resolve, for a single-track UD computation, (1) the raster grid the kernel
@@ -32,5 +34,7 @@ warped onto the target at the end.  An explicit template in another CRS is
 reprojected into the compute CRS for the kernel and the result is warped
 back onto the template's exact grid.  Returns \code{list(grid, warp_to)} where
 \code{warp_to} is a SpatRaster template, a CRS, or NULL (no warp needed).
+A template is checked against the kernel windows of \code{kins} and never
+enlarged; an automatic grid is built large enough (\code{.ud_auto_grid()}).
 }
 \keyword{internal}

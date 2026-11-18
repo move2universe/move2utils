@@ -32,8 +32,8 @@
 #' @param margin Integer (must be odd). Minimum locations on each side of
 #'   a potential breakpoint.
 #' @param parallel,cores Retained for API compatibility. Since 0.2.0
-#'   the variance kernel is implemented in C with OpenMP threading
-#'   (commit `bf8eb34`); these arguments are no-ops at the R level.
+#'   the variance kernel is implemented in C with OpenMP threading;
+#'   these arguments are no-ops at the R level.
 #'   To control thread count, set the `OMP_NUM_THREADS` environment
 #'   variable before invoking R.
 #'
@@ -75,25 +75,22 @@
 #'   isotropic variant.
 #'
 #' @examples
-#' \dontrun{
 #' library(move2)
+#' library(move2utils)
 #' library(sf)
-#'
 #' fishers <- mt_read(mt_example())
 #' fishers <- fishers[!st_is_empty(fishers), ]
-#' f1 <- fishers[mt_track_id(fishers) == "F1", ]
-#' f1_proj <- st_transform(f1, mt_aeqd_crs(f1))
-#'
-#' var_obj <- mt_dbgb_variance(f1_proj, location_error = 25,
-#'                              margin = 15, window_size = 31)
+#' leroy <- filter_track_data(fishers, .track_id = "M1")
+#' leroy <- st_transform(leroy, mt_aeqd_crs(leroy))
+#' var_obj <- mt_dbgb_variance(leroy, location_error = 25,
+#'                             margin = 15, window_size = 31)
 #' var_obj
 #'
-#' # Directionality index
+#' ## Directionality index
 #' mv <- mt_motion_variance(var_obj)
 #' I_d <- (mv$para - mv$orth) / (mv$para + mv$orth)
-#' plot(mt_time(f1_proj), I_d, type = "l",
+#' plot(mt_time(leroy), I_d, type = "l",
 #'      xlab = "Time", ylab = "Directionality index")
-#' }
 #'
 #' @export
 mt_dbgb_variance <- function(object, location_error, window_size, margin,

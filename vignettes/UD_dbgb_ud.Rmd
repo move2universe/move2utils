@@ -120,16 +120,18 @@ produces a `SpatRaster` whose cells sum to 1.
 
 ```{r ud}
 ud_dbgb <- mt_dbgb_ud(var_dbgb, location_error = 20,
-                       raster = 100, ext = 0.85)
+                       res = 100, ext_factor = 0.85)
 
 terra::plot(ud_dbgb, main = "dBGB utilisation distribution")
 ```
 
-If you see `The raster does not extent far enough ...`, increase `ext`
-(padding around the auto-generated raster) or pass a pre-made
-`SpatRaster` that is large enough. The dBGB kernel needs more margin
-than dBBMM when the parallel variance is high, because the bridge
-extends further along the direction of travel.
+The dBGB kernel reaches further from the track than the dBBMM kernel
+when the parallel variance is high, because the bridge extends further
+along the direction of travel. An automatically built grid is enlarged
+until every bridge fits, so `ext_factor` (the padding around the track's
+bounding box) only sets a minimum. A `SpatRaster` passed as `raster` is
+never enlarged: if it is too small, the call stops and gives the
+`terra::extend()` call that makes it large enough.
 
 
 ## Cumulative-volume UD and isopleths
@@ -155,8 +157,8 @@ var_dbbmm <- mt_dbbmm_variance(
   leroy, location_error = 20,
   window_size = 31, margin = 11
 )
-ud_dbbmm <- mt_dbbmm_ud(var_dbbmm, location_error = 20, raster = 100,
-                         ext = 0.85, verbose = FALSE)
+ud_dbbmm <- mt_dbbmm_ud(var_dbbmm, location_error = 20, res = 100,
+                         ext_factor = 0.85, verbose = FALSE)
 
 ## put both UDs on the same extent so the two panels are comparable
 common_ext <- terra::union(terra::ext(ud_dbbmm), terra::ext(ud_dbgb))
@@ -188,8 +190,8 @@ index it one shorter than the track length (n-1 segments).
 lag_min <- as.numeric(mt_time_lags(leroy, units = "min"))
 var_dbgb$seg_interest[lag_min > 300] <- FALSE
 
-ud_masked <- mt_dbgb_ud(var_dbgb, location_error = 20, raster = 100,
-                         ext = 0.85, verbose = FALSE)
+ud_masked <- mt_dbgb_ud(var_dbgb, location_error = 20, res = 100,
+                         ext_factor = 0.85, verbose = FALSE)
 ```
 
 ## Further reading

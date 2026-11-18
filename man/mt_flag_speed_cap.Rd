@@ -109,8 +109,8 @@ vs not for the above-cap signal, in nat units
 (\code{log(step_speed / cap)}); \code{> 0} above the cap.
 Two-sided in the data-driven modes; one-sided (negative
 clamped to 0) under \code{threshold_type = "hard"}, where a
-slow step is no evidence.  See
-\code{DESIGN_evidence_accumulation.md}.}
+slow step is no evidence.  See \code{\link{mt_flag_consensus}}
+for how these columns are combined.}
 }
 The value of the cap actually used is stored as the attribute
 \code{"v_max_used"}.
@@ -170,17 +170,20 @@ timestamps yield NA step speeds and are excluded from flagging but
 retained in the output, preserving row parity with the caller.
 }
 \examples{
-\dontrun{
 library(move2)
+library(move2utils)
+## a simulated track with known errors, shipped with the package
+tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+                              package = "move2utils"))
+track <- filter_track_data(tracks, .track_id = "CPF_C")
 ## data-driven (default); silent on unimodal speed distributions
-x <- mt_flag_speed_cap(x)
+x <- mt_flag_speed_cap(track)
 
 ## hard physiological cap: golden eagle documented top ~50 m/s
-x <- mt_flag_speed_cap(x, v_max = 50, threshold_type = "hard")
+x <- mt_flag_speed_cap(track, v_max = 50, threshold_type = "hard")
 
 ## diagnostic: inspect distribution + suggested cap without flagging
-v <- mt_suggest_speed_cap(x)
-}
+v <- mt_suggest_speed_cap(track)
 
 }
 \seealso{

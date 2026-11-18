@@ -217,7 +217,7 @@ turning angle), \code{joint_prob} (product of all three),
 \code{loglr_prob} (signed log-likelihood-ratio of outlier vs not, in
 nat units; \code{> 0} where flagged, \code{< 0} below the boundary,
 \code{NA} where the detector abstains -- see
-\code{DESIGN_evidence_accumulation.md}),
+\code{\link{mt_flag_consensus}}),
 \code{is_outlier} (logical flag), \code{flagged_by_prob} (logical,
 same as \code{is_outlier} for this primitive -- named for parity with
 the other primitives so the output can be voted by
@@ -276,28 +276,23 @@ instead of raw step lengths and turning angles. This makes the method
 time-aware, which is recommended for irregularly sampled data.
 }
 \examples{
-\dontrun{
 library(move2)
+library(move2utils)
 
 ## load example data
 fishers <- mt_read(mt_example())
 fishers <- fishers[!sf::st_is_empty(fishers), ]
 
-## flag outliers per individual (automatic when multiple IDs present)
-result <- mt_flag_outliers(fishers)
+## a single individual: Leroy (M1)
+leroy <- filter_track_data(fishers, .track_id = "M1")
+result <- mt_flag_outliers(leroy)
+table(result$is_outlier)
 
-## remove outliers, single individual
-leroy <- fishers[mt_track_id(fishers) == "M4", ]
+## remove outliers
 cleaned <- mt_flag_outliers(leroy, remove = TRUE)
 
 ## copula method (faster, works well with small samples)
 result_cop <- mt_flag_outliers(leroy, method = "copula")
-
-## pooled reference: score against distribution from all individuals
-result_pop <- mt_flag_outliers(fishers, reference = fishers)
-
-## default: ACF-derived alpha (adapts to the data)
-result_acf <- mt_flag_outliers(leroy)
 
 ## manual override: ignore auto-differences
 result_a0 <- mt_flag_outliers(leroy, autodiff_alpha = 0)
@@ -308,15 +303,24 @@ result_a1 <- mt_flag_outliers(leroy, autodiff_alpha = 1.0)
 ## iterative refinement for consecutive outliers
 result_iter <- mt_flag_outliers(leroy, iterations = 3)
 
-## quality weighting with satellite count and HDOP
-result_qc <- mt_flag_outliers(leroy, quality_columns = list(
-  "gps.satellite.count" = function(s) pnorm(s, mean = 7, sd = 2),
-  "gps.hdop" = function(h) 1 - pnorm(h, mean = 3, sd = 1.5)
-))
-
 ## raw step/turn metrics (without time normalisation)
 result_raw <- mt_flag_outliers(leroy, time_normalize = FALSE)
-}
+
+## quality weighting with satellite count and DOP, on data that carry them
+tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+                              package = "move2utils"))
+track <- filter_track_data(tracks, .track_id = "CPF_C")
+result_qc <- mt_flag_outliers(track, quality_columns = list(
+  "gps:satellite-count" = function(s) pnorm(s, mean = 7, sd = 2),
+  "gps:dop" = function(h) 1 - pnorm(h, mean = 3, sd = 1.5)
+))
+
+## per individual (automatic when several IDs are present), here three
+three <- filter_track_data(fishers, .track_id = c("F1", "M1", "M2"))
+result_all <- mt_flag_outliers(three)
+
+## pooled reference: score against the distribution from all three
+result_pop <- mt_flag_outliers(three, reference = three)
 
 }
 \references{

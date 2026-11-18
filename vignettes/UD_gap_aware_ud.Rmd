@@ -110,9 +110,9 @@ var_masked <- mt_mask_segments(var_full, long_gap)
 
 ```{r ud-A, fig.width = 11, fig.height = 4, fig.cap = "Left: naive UD fits a bridge across every segment, including the 19 gaps longer than six hours, spreading probability over areas the animal never visited. Middle: long-gap bridges masked out with mt_mask_segments(); probability re-concentrates onto the true track. Right: difference (naive − masked) isolates the smear artefact — positive cells are the fake density the gap bridges deposited."}
 ud_smeared <- mt_dbbmm_ud(var_full,   location_error = 25,
-                            raster = 100, ext = 0.5, verbose = FALSE)
+                            res = 100, ext_factor = 0.5, verbose = FALSE)
 ud_clean   <- mt_dbbmm_ud(var_masked, location_error = 25,
-                            raster = 100, ext = 0.5, verbose = FALSE)
+                            res = 100, ext_factor = 0.5, verbose = FALSE)
 ud_diff    <- ud_smeared - ud_clean
 
 common_range <- range(c(terra::values(ud_smeared),
@@ -136,7 +136,7 @@ var_full_d   <- mt_dbgb_variance(leroy, location_error = 25,
                                    window_size = 31, margin = 11)
 var_masked_d <- mt_mask_segments(var_full_d, long_gap)
 ud_clean_d   <- mt_dbgb_ud(var_masked_d, location_error = 25,
-                             raster = 100, ext = 0.5)
+                             res = 100, ext_factor = 0.5)
 ```
 
 `mt_mask_segments()` dispatches on the object class and writes to the
@@ -184,7 +184,7 @@ var_list <- mt_dbbmm_variance(
 )
 
 ## per-run UDs rastered on a common grid
-stk <- mt_dbbmm_ud(var_list, location_error = 25, raster = 100, ext = 0.5)
+stk <- mt_dbbmm_ud(var_list, location_error = 25, res = 100, ext_factor = 0.5)
 names(stk)
 terra::plot(stk)
 ```

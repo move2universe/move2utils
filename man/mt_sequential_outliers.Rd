@@ -132,8 +132,9 @@ algorithm used a single threshold calibrated on the full formula;
 on multi-state tracks where the autodifference KDE returned very
 large densities at the bimodal Delta-step peaks, the full-formula
 threshold sat orders of magnitude above typical partial-formula
-first-step scores and the scan flagged ~all fixes (WH17 over-flag
-at 99.99\\%).  Post-fix on WH17 the flag rate drops to ~1.4\\%; on
+first-step scores and the scan flagged ~all fixes (99.99\\% on a
+Bonelli's eagle track).  With two thresholds that track's flag rate
+drops to ~1.4\\%; on
 single-state synthetic CPF tracks the two thresholds happen to
 agree numerically and the per-fix flag set is byte-identical.
 User-supplied \code{threshold = X} sets both thresholds to
@@ -142,7 +143,7 @@ User-supplied \code{threshold = X} sets both thresholds to
 The 0.5\\%-percentile heuristic remains the calibration target;
 a per-fix p-value-based threshold (parametric null on the
 reference log-probability) is the natural improvement direction
-but is deferred (see \code{FUTURE_IMPROVEMENTS.md} M-12).
+but is not yet implemented.
 
 Documented workflow recommendations remain unchanged: on heavily
 contaminated multi-state tracks, supply a clean
@@ -155,11 +156,15 @@ block-shape contamination (CPF_D).
 }
 
 \examples{
-\dontrun{
+library(move2)
+library(move2utils)
+## a simulated track with known errors, shipped with the package
+tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+                              package = "move2utils"))
+track <- filter_track_data(tracks, .track_id = "CPF_C")
 ## Forward-backward scan from the track endpoints:
 res <- mt_sequential_outliers(track, scan = "forward-backward")
 summary(res$seq_joint_prob)
-}
 
 }
 \references{

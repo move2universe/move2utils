@@ -94,9 +94,12 @@
 #' 28, 1615–1630. \doi{10.1007/s10980-013-9910-0}
 #'
 #' @examples
-#' \dontrun{
 #' library(move2)
+#' library(move2utils)
 #' fishers <- mt_read(mt_example())
+#' fishers <- fishers[!sf::st_is_empty(fishers), ]
+#' ## three of the eight fishers keep the example quick
+#' fishers <- filter_track_data(fishers, .track_id = c("F1", "M1", "M2"))
 #' out <- mt_corridor(fishers)
 #' table(out$corridor)
 #'
@@ -107,7 +110,7 @@
 #'   speed_threshold   = stats::quantile(all_speeds, 0.75, na.rm = TRUE),
 #'   circvar_threshold = 0.2
 #' )
-#' }
+#' table(out2$corridor)
 #'
 #' @export
 mt_corridor <- function(x,

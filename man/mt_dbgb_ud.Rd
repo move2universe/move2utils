@@ -10,11 +10,13 @@ mt_dbgb_ud(
   location_error = NULL,
   margin = 15,
   window_size = 31,
-  ext = 0.5,
-  dim_size = 100,
+  ext_factor = 0.5,
+  dim_size = NULL,
   time_step = NULL,
   verbose = TRUE,
   location_error_na = "median",
+  res = NULL,
+  ext = NULL,
   ...
 )
 }
@@ -27,8 +29,13 @@ mt_dbgb_ud(
 \item A named list of \code{mt_dbgb_variance} objects (multi-track).
 }}
 
-\item{raster}{A \code{terra::SpatRaster} defining the output grid, a numeric
-cell size in map units, or \code{NULL} to auto-compute.}
+\item{raster}{A \code{terra::SpatRaster} template: the UD is computed for its
+cells and returned on that grid. A template is never enlarged; if it is
+too small for the bridges, the call stops and says on which sides; when
+the template is in the CRS the computation runs in, it also gives the
+\code{terra::extend()} call that fixes it. Give at most one of \code{raster},
+\code{res} and \code{dim_size}; with none, a grid is built from \code{dim_size = 100}.
+(A number here is the deprecated way of giving \code{res}.)}
 
 \item{location_error}{Per-fix horizontal 1-sigma positional error,
 \strong{in metres}.  When \code{object} is a \code{move2} object, this
@@ -39,24 +46,44 @@ object or a list of them, the default \code{NULL} re-uses the
 per-fix vector stored on each variance object at fit time;
 supplying an explicit value here overrides it.}
 
-\item{margin}{Integer (odd). Margin for variance estimation. Only used
-when \code{object} is a \code{move2} object.}
+\item{margin}{Integer (odd). Margin for variance estimation window.
+Only used when \code{object} is a \code{move2} object.}
 
 \item{window_size}{Integer (odd). Window size for variance estimation.
 Only used when \code{object} is a \code{move2} object.}
 
-\item{ext}{Numeric. Extension factor for the bounding box. Default 0.5.}
+\item{ext_factor}{Numeric, non-negative. Fraction of the track's
+bounding-box width and height added on each side of an automatically
+built grid. Default 0.5. If that box is too small for the bridges, the
+grid is enlarged to fit them (see \dQuote{Grid}).}
 
-\item{dim_size}{Integer. Cells along the longest dimension. Default 100.}
+\item{dim_size}{Integer, at least 2. Number of cells along the longest
+side of an automatically built grid. Higher values give finer
+resolution but slower computation. Used when neither \code{raster} nor
+\code{res} is given, with a default of 100.}
 
-\item{time_step}{Numeric or \code{NULL}. Integration time step in minutes.}
+\item{time_step}{Numeric or \code{NULL}. Time step for the bridge
+integration, in minutes. Defaults to 1/20.1 of the minimum time lag
+(as in \code{move}). Smaller values give more precise UDs but are slower.}
 
-\item{verbose}{Logical. Print progress messages for multi-track.}
+\item{verbose}{Logical. If \code{TRUE}, report progress for multi-track input
+and say when an automatic grid had to be enlarged.}
 
 \item{location_error_na}{Strategy for filling \code{NA}s in a per-fix
 \code{location_error} vector.  Forwarded to \code{\link[=mt_dbgb_variance]{mt_dbgb_variance()}}
 when \code{object} is a \code{move2}; ignored otherwise (the
 variance object already carries the imputed vector).}
+
+\item{res}{Numeric. Cell size of an automatically built grid, in map
+units of the compute CRS (metres). Cells are square. For multi-track
+input, one common grid covers all tracks. A grid built from \code{res} or
+\code{dim_size}, enlarged or not, may have at most
+\code{getOption("move2utils.ud_max_cells", 1e8)} cells; above that the call
+stops before anything is allocated (class
+\code{move2utils_ud_grid_too_large}) and suggests a larger \code{res}.}
+
+\item{ext}{Deprecated former name of \code{ext_factor}. Renamed because in
+\code{terra} \code{ext} denotes an extent.}
 
 \item{...}{Additional arguments passed to methods.}
 }
@@ -87,20 +114,58 @@ returns the UD on that exact grid. See \code{\link[=mt_dbbmm_ud]{mt_dbbmm_ud()}}
 description.
 }
 
-\examples{
-\dontrun{
-library(move2)
-library(sf)
+\section{Grid}{
 
+The grid is either the template given as \code{raster}, or it is built
+automatically: the track's bounding box, widened by \code{ext_factor}, divided
+into square cells of size \code{res} or into \code{dim_size} cells along its longest
+side. The kernel spreads each bridge time step over five standard
+deviations (the larger of the parallel and orthogonal ones) around the
+bridge mean, so the grid has to reach that far beyond the track. An
+automatic grid that does not is enlarged until it does: with \code{res} the
+cell size holds and cells are added; with \code{dim_size} the cell count holds
+and the cells grow. A grid that is large enough is used unchanged, so
+results are identical to earlier versions wherever those succeeded. A
+template is never enlarged: if it is too small the call stops and says
+on which sides. Grids need at least two rows and two columns.
+}
+
+\section{Coming from move}{
+
+\code{mt_dbgb_ud()} is the port of \code{move::dynBGB()}, and its C kernel is
+\code{move}'s. Arguments map as follows: a \code{RasterLayer} as \code{raster} becomes a
+\code{SpatRaster} template as \code{raster}; a number as \code{raster} (the cell size)
+becomes \code{res}; \code{dimSize} becomes \code{dim_size}; \code{ext} becomes \code{ext_factor};
+\code{locErr} becomes \code{location_error}. \code{move::dynBGB()} has no defaults for
+\code{ext} and \code{dimSize}; this package uses \code{ext_factor = 0.5} and
+\code{dim_size = 100}. Its automatic grid is built with \verb{raster::res<-}, which
+keeps the box's origin, whereas this package snaps the box outward
+symmetrically as \code{move::brownian.bridge.dyn()} does, so automatic grids
+differ from \code{move::dynBGB()}'s. Where \code{move} stops because the grid is too
+small, an automatic grid is enlarged here instead. \code{move}'s kernel also
+accepts a grid on which its window reaches exactly one cell beyond the
+last row or column, and then reads and writes outside the grid; such a
+grid counts as too small here.
+}
+
+\examples{
+library(move2)
+library(move2utils)
+library(sf)
 fishers <- mt_read(mt_example())
 fishers <- fishers[!st_is_empty(fishers), ]
-f1 <- fishers[mt_track_id(fishers) == "F1", ]
-f1_proj <- st_transform(f1, mt_aeqd_crs(f1))
-
-ud <- mt_dbgb_ud(f1_proj, location_error = 25,
-                  margin = 15, window_size = 31, ext = 0.85)
+leroy <- filter_track_data(fishers, .track_id = "M1")
+## the first 200 fixes keep the example quick
+leroy <- st_transform(leroy, mt_aeqd_crs(leroy))[seq_len(200), ]
+## One step: variance and UD
+ud <- mt_dbgb_ud(leroy, location_error = 25,
+                 margin = 15, window_size = 31)
 terra::plot(ud)
-}
+
+## Two steps: fit the variance once, re-use it for other grids
+var_obj <- mt_dbgb_variance(leroy, location_error = 25,
+                            margin = 15, window_size = 31)
+ud_200m <- mt_dbgb_ud(var_obj, res = 200)
 
 }
 \references{

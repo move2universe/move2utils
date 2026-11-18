@@ -30,11 +30,11 @@ test_that("dbbmm UD returns the caller's CRS and sums to 1 (long/lat, UTM, AEQD)
   aq  <- move2::mt_aeqd_crs(f1)
 
   ud_ll <- suppressMessages(mt_dbbmm_ud(f1, location_error = 25,
-                                        dim_size = 80, ext = 1.5))
+                                        dim_size = 80, ext_factor = 1.5))
   ud_u  <- suppressMessages(mt_dbbmm_ud(sf::st_transform(f1, utm),
-                                        location_error = 25, dim_size = 80, ext = 1.5))
+                                        location_error = 25, dim_size = 80, ext_factor = 1.5))
   ud_a  <- suppressMessages(mt_dbbmm_ud(sf::st_transform(f1, aq),
-                                        location_error = 25, dim_size = 80, ext = 1.5))
+                                        location_error = 25, dim_size = 80, ext_factor = 1.5))
 
   expect_true(sf::st_is_longlat(terra::crs(ud_ll)))
   expect_true(sf::st_crs(terra::crs(ud_u)) == utm)
@@ -61,7 +61,7 @@ test_that("multi-track dbbmm UD warps the whole stack to long/lat, each layer su
   two <- fishers[mt_track_id(fishers) %in% c("F1", "M1"), ]
 
   stk <- suppressMessages(mt_dbbmm_ud(two, location_error = 25,
-                                      dim_size = 70, ext = 1.5))
+                                      dim_size = 70, ext_factor = 1.5))
   expect_equal(terra::nlyr(stk), 2L)
   expect_true(sf::st_is_longlat(terra::crs(stk)))
   sums <- terra::global(stk, "sum", na.rm = TRUE)[, 1]
@@ -93,13 +93,13 @@ test_that("an environmental template raster receives the UD on its exact grid", 
 test_that("dbgb UD returns the caller's CRS and sums to 1", {
   f1 <- read_f1()
   ud_ll <- suppressMessages(mt_dbgb_ud(f1, location_error = 25,
-                                       dim_size = 70, ext = 1.5))
+                                       dim_size = 70, ext_factor = 1.5))
   expect_true(sf::st_is_longlat(terra::crs(ud_ll)))
   expect_equal(sum(terra::values(ud_ll), na.rm = TRUE), 1, tolerance = 1e-6)
 
   utm <- sf::st_crs(32618)
   ud_u <- suppressMessages(mt_dbgb_ud(sf::st_transform(f1, utm),
-                                      location_error = 25, dim_size = 70, ext = 1.5))
+                                      location_error = 25, dim_size = 70, ext_factor = 1.5))
   expect_true(sf::st_crs(terra::crs(ud_u)) == utm)
   expect_equal(sum(terra::values(ud_u), na.rm = TRUE), 1, tolerance = 1e-6)
 })

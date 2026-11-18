@@ -129,14 +129,14 @@ by state and run \code{mt_clean_track} per segment will read
 }
 
 \examples{
-\dontrun{
 library(move2)
-x <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
-                           package = "move2utils"))
-x <- x[!sf::st_is_empty(x), ]
-res <- mt_clean_track(x, plot = FALSE, remove = FALSE)
+library(move2utils)
+## a simulated track with known errors, shipped with the package
+tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+                              package = "move2utils"))
+track <- filter_track_data(tracks, .track_id = "CPF_C")
+res <- mt_clean_track(track, plot = FALSE, remove = FALSE)
 mt_diagnose_clean_track(res)
-}
 
 }
 \seealso{

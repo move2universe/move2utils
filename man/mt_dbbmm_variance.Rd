@@ -59,8 +59,8 @@ each side of a potential breakpoint within a window.
 Must satisfy \code{window_size >= 2 * margin + 1}.}
 
 \item{parallel, cores}{Retained for API compatibility. Since 0.2.0
-the variance kernel is implemented in C with OpenMP threading
-(commit \code{bf8eb34}); these arguments are no-ops at the R level.
+the variance kernel is implemented in C with OpenMP threading;
+these arguments are no-ops at the R level.
 To control thread count, set the \code{OMP_NUM_THREADS} environment
 variable before invoking R.}
 
@@ -113,33 +113,32 @@ position at a time, and the final variance for each location is the
 mean across all windows that covered it.
 
 The variance estimation and breakpoint testing are implemented in C
-(Brent's method optimizer) for performance. The sliding window loop
-can optionally be parallelised across CPU cores.
+(Brent's method optimizer) for performance. The windows are processed
+in parallel by OpenMP threads in the C code, whose number is set by the
+\code{OMP_NUM_THREADS} environment variable rather than by \code{parallel} or
+\code{cores}.
 }
 \examples{
-\dontrun{
 library(move2)
+library(move2utils)
 library(sf)
-
-# Load and prepare example data
 fishers <- mt_read(mt_example())
 fishers <- fishers[!st_is_empty(fishers), ]
-
-# Single track
-f1 <- fishers[mt_track_id(fishers) == "F1", ]
-f1_proj <- st_transform(f1, mt_aeqd_crs(f1))
-var_obj <- mt_dbbmm_variance(f1_proj, location_error = 25,
-                              window_size = 31, margin = 11)
+leroy <- filter_track_data(fishers, .track_id = "M1")
+leroy <- st_transform(leroy, mt_aeqd_crs(leroy))
+## Single track
+var_obj <- mt_dbbmm_variance(leroy, location_error = 25,
+                             window_size = 31, margin = 11)
 var_obj
-plot(mt_time(f1_proj), mt_motion_variance(var_obj),
+plot(mt_time(leroy), mt_motion_variance(var_obj),
      type = "l", xlab = "Time", ylab = "BM variance")
 
-# Multiple tracks
-fishers_proj <- st_transform(fishers, mt_aeqd_crs(fishers))
-var_list <- mt_dbbmm_variance(fishers_proj, location_error = 25,
-                               window_size = 31, margin = 11)
+## Several tracks (here three): a named list, one variance object per track
+three <- filter_track_data(fishers, .track_id = c("F1", "M1", "M2"))
+three <- st_transform(three, mt_aeqd_crs(three))
+var_list <- mt_dbbmm_variance(three, location_error = 25,
+                              window_size = 31, margin = 11)
 names(var_list)
-}
 
 }
 \references{

@@ -42,7 +42,10 @@ thinning is performed independently per track.
 \description{
 Select a subset of fixes such that every successive retained pair has
 a time lag within \verb{[interval - tolerance, interval + tolerance]}, and
-such that the number of retained fixes is maximised. The original
+such that the number of retained fixes is maximised. The exception is
+a gap in the data longer than \code{interval + tolerance}: the track is
+split there, so the lag across the gap stays as long as it was. The
+original
 \code{move2} object is returned whole with a logical column
 \code{thin_selected} marking retained fixes.
 }

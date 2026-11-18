@@ -73,16 +73,21 @@
 #'   For multi-track input the list is named per individual.
 #'
 #' @examples
-#' \dontrun{
 #' library(move2)
+#' library(move2utils)
+#' library(sf)
 #' fishers <- mt_read(mt_example())
-#' s <- mt_suggest_dbbmm_window(fishers, target_hours = 4)
+#' fishers <- fishers[!st_is_empty(fishers), ]
+#' leroy <- filter_track_data(fishers, .track_id = "M1")
+#' s <- mt_suggest_dbbmm_window(leroy, target_hours = 4)
 #' s
-#' ## use the suggestion:
-#' var_obj <- mt_dbbmm_variance(fishers, location_error = 25,
-#'                                window_size = s$window_size,
-#'                                margin      = s$margin)
-#' }
+#'
+#' ## use the suggestion (variance fitting needs projected coordinates);
+#' ## for several tracks the function returns one suggestion per track
+#' leroy <- st_transform(leroy, mt_aeqd_crs(leroy))
+#' var_obj <- mt_dbbmm_variance(leroy, location_error = 25,
+#'                              window_size = s$window_size,
+#'                              margin      = s$margin)
 #'
 #' @references
 #' Kranstauber, B., Kays, R., LaPoint, S. D., Wikelski, M., & Safi, K.

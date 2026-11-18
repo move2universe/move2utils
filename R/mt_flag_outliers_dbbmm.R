@@ -53,13 +53,17 @@
 #'   static bridge primitive.
 #'
 #' @examples
-#' \dontrun{
 #' library(move2)
+#' library(move2utils)
 #' x <- mt_read(system.file("extdata/Pettstadt1-14053.csv.gz",
-#'                            package = "move2utils"))
+#'                          package = "move2utils"))
 #' x <- x[!sf::st_is_empty(x), ]
+#' ## the file has repeated timestamps; keep one fix per time
+#' x <- mt_filter_unique(x, criterion = "first")
+#' ## the first 2000 fixes keep the example quick
+#' x <- x[seq_len(2000), ]
 #' res <- mt_flag_outliers_dbbmm(x)
-#' }
+#' table(res$is_outlier)
 #'
 #' @export
 mt_flag_outliers_dbbmm <- function(x, ...) {

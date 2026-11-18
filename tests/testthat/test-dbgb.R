@@ -64,7 +64,7 @@ test_that("mt_dbgb_ud returns a SpatRaster that sums to 1", {
 
   ud <- mt_dbgb_ud(leroy_proj, location_error = 25,
                  margin = 15, window_size = 31,
-                 ext = 2.0, dim_size = 100)
+                 ext_factor = 2.0, dim_size = 100)
 
   expect_s4_class(ud, "SpatRaster")
   expect_true(abs(sum(terra::values(ud), na.rm = TRUE) - 1) < 0.01)

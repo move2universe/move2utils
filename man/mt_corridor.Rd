@@ -98,9 +98,12 @@ This is a port of the \code{move::corridor()} concept (LaPoint et al. 2013)
 to the \code{move2} / \code{sf} stack, using modern spatial indexing.
 }
 \examples{
-\dontrun{
 library(move2)
+library(move2utils)
 fishers <- mt_read(mt_example())
+fishers <- fishers[!sf::st_is_empty(fishers), ]
+## three of the eight fishers keep the example quick
+fishers <- filter_track_data(fishers, .track_id = c("F1", "M1", "M2"))
 out <- mt_corridor(fishers)
 table(out$corridor)
 
@@ -111,7 +114,7 @@ out2 <- mt_corridor(
   speed_threshold   = stats::quantile(all_speeds, 0.75, na.rm = TRUE),
   circvar_threshold = 0.2
 )
-}
+table(out2$corridor)
 
 }
 \references{

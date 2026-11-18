@@ -78,8 +78,7 @@ scalars or \code{NULL}.  Control the entropy / gap detectors
 inside the \code{residual_max = NULL} auto path -- the gate
 on \code{|residual|} in metres that catches geometrically
 extreme residuals.  \code{NULL} (default) defers to the leaf
-formals.  See audits/2026-05-25-parameter-propagation/findings.md
-§1.2.}
+formals.}
 
 \item{residual_dip_alpha}{Numeric in (0, 1).  Significance level
 for the Hartigan dip test that validates the broken-stick
@@ -249,18 +248,18 @@ track contains physiologically-impossible-speed events, run
 }
 
 \examples{
-\dontrun{
 library(move2)
-x <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
-                           package = "move2utils"))
-x <- filter_track_data(x, .track_id = "CPF_A")
-
+library(move2utils)
+## a simulated track with known errors, shipped with the package
+tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+                              package = "move2utils"))
+track <- filter_track_data(tracks, .track_id = "CPF_C")
 ## standalone (single-state track or pre-cleaned)
-res <- mt_flag_outliers_dbgb(x)
+res <- mt_flag_outliers_dbgb(track)
 
 ## cascade composition: peel impossible-speed fixes first
-res <- mt_flag_outliers_dbgb(x, pre_peel_v_max = 50)
-}
+res <- mt_flag_outliers_dbgb(track, pre_peel_v_max = 50)
+table(res$is_outlier)
 
 }
 \seealso{

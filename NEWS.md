@@ -1,3 +1,110 @@
+# move2utils 0.4.6 — UD grids that are always large enough
+
+Applies to `mt_dbbmm_ud()` and `mt_dbgb_ud()` alike.
+
+**An automatic grid is now always large enough.** The kernels (ported from
+`move`) spread each bridge time step over 4 (dBBMM) or 5 (dBGB) standard
+deviations and stopped with "grid not large enough" when that window left
+the grid. The default `ext = 0.5` failed on the package's own bundled data:
+the fisher worked example, and the help-page examples. A new internal C
+routine walks the kernels' time steps with their own arithmetic, without
+the densities, and the grid is checked before a kernel runs. If the grid
+from `ext_factor` is large enough it is used **unchanged, so results are
+bit-identical to 0.4.5**. If not, it is enlarged: with `res` the cell size
+holds and cells are added; with `dim_size` the longest side keeps that many
+cells and the cells grow. With `verbose = TRUE`, the default, a message
+(class `move2utils_ud_grid_enlarged`) says so; this message is new output on
+calls that enlarge.
+The kernels' arithmetic is unchanged; the dBGB kernel gains a segment mask
+(see the masking fix below).
+
+**A memory-safety defect inherited from `move` can no longer be reached.**
+The kernels rejected a window only when it went *more* than one cell past
+the last row or column, but looped one cell further than they checked. At
+exactly one cell they read past the grid-coordinate vectors and wrote past
+the output matrix (in y, into the top cell of the neighbouring column).
+Because the kernels stop only at the first offending time step, a call that
+ended in the grid error could already have written out of bounds: on the
+bundled fisher data, a sequence of 0.4.5 calls ending in that error aborted R
+with `malloc(): invalid size`. Such a grid is now treated as too small. These
+calls, and dBGB UDs with masked segments (below), are the only ones whose
+results differ from 0.4.5.
+
+**`mt_mask_segments()` on dBGB now drops the masked bridge, as on dBBMM.**
+Masking segment `i` is documented to drop the bridge from fix `i` to fix
+`i + 1`. For dBBMM it did. For dBGB the kernel input was instead subset to
+`seg_interest`, which dropped fix `i` itself and bridged fix `i - 1` to fix
+`i + 1`: masking a long gap replaced it with a longer bridge across it and
+raised the UD there (on the fisher M1 track, masking the 19 gaps over 5 h
+raised the UD at their midpoints from 0.029 to 0.041). The dBGB kernel now
+takes a segment mask, as the dBBMM kernel always has, and every fix whose
+variance window is fully covered stays in. The same holds for setting
+`seg_interest` directly. Unmasked dBGB UDs are bit-identical to 0.4.5.
+
+**Templates are never enlarged.** A `SpatRaster` passed as `raster` that is
+too small stops with an error (class `move2utils_ud_raster_too_small`)
+naming the sides. When the template is in the CRS the computation runs in,
+the error also gives the `terra::extend(..., snap = "out")` call that fixes
+it; for a template in another CRS it does not, because coordinates in the
+compute CRS would not apply to it.
+
+**Grid size is capped.** A grid built from `res` or `dim_size` may have at
+most `getOption("move2utils.ud_max_cells", 1e8)` cells (about 800 MB per
+layer), whether or not it is enlarged; above that the call stops before
+anything is allocated (class `move2utils_ud_grid_too_large`) and suggests a
+larger `res` or a smaller `dim_size`. This catches a large variance growing
+an enlarged `res` grid, and also a mistyped `res` (e.g. `res = 1` on a long
+track). Templates are not capped.
+
+**Grid arguments, aligned with `terra`.**
+
+- New `res`: the cell size (square cells).
+- Exactly one of `raster` (template), `res` and `dim_size` may be given;
+  more than one is an error, as `move`'s method dispatch made it.
+  `dim_size` now defaults to `NULL`, meaning 100 when neither of the others
+  is given.
+- `ext` is renamed `ext_factor`, because in `terra` `ext` denotes an
+  extent. Passing a `SpatExtent` to either is an error that explains the
+  difference.
+- **Deprecated, still working:** `ext = ` (use `ext_factor`) and a number
+  passed as `raster` (use `res`). Both warn with class
+  `move2utils_deprecated` and give identical results.
+- **Now an error:** combining a template or a numeric `raster` with an
+  explicit `dim_size`. In 0.4.5 `dim_size` was silently ignored there.
+- **Also an error now, where the kernels misbehaved in 0.4.5:** a grid with
+  fewer than two rows or columns (the kernels read past the grid
+  coordinates), fewer than two fixes (no bridge of interest, for dBGB), and a
+  `time_step` that is not positive (the kernels never ended).
+- **Stricter validation, also new errors:** `ext_factor` must be a single
+  non-negative finite number; `dim_size` a single whole number of at least 2
+  (at least 3 when the grid has to be enlarged); `res` a single positive
+  number; `raster` a SpatRaster or `NULL`.
+- Templates passed to the multi-track (list) methods are now checked against
+  every track. The zero-mass error no longer suggests that `ext` may be too
+  large.
+
+**Documentation.** Both help pages gain the sections "Grid" and "Coming from
+move" (argument mapping, the differing defaults, and measured agreement).
+The header of `test-move-parity-dbbmm-ud.R` claimed machine-precision
+agreement with `move`; it now states what was measured (UD kernel within
+3e-9 relative given the same variance; end to end about 9e-8 relative,
+from optimiser tolerance in the variance step).
+
+**Help-page examples run.** 28 of 30 help pages wrapped their examples in
+`\dontrun`, so `R CMD check` ran none of them, and 16 failed when run
+(Movebank pseudo-code, undefined objects, data with empty geometries or
+repeated timestamps, an exact EMD that ran for minutes). All are rewritten on
+data shipped with `move2` or with this package and run in about 38 s in all;
+`R CMD check --as-cran` now runs every one. The `UD_bursted_uds` vignette's
+split-and-iterate idiom, which stopped with a grid error, now takes its
+common grid from the list method. Help pages no longer point to files that
+are not part of the package.
+
+**`R CMD check` WARNING fixed.** The list and variance-object methods of
+`mt_dbbmm_ud()` and `mt_dbgb_ud()` now take `location_error_na`, as their
+generics do (S3 generic/method consistency). As documented, it is ignored
+there: the variance object already carries the imputed vector.
+
 # move2utils 0.4.5 — cleaned-track return no longer carries flag columns
 
 `mt_clean_track(x)` with the default `remove = TRUE` now returns **only

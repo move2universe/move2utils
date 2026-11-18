@@ -30,17 +30,16 @@ Extract the estimated movement variance from a dBBMM or dBGB variance
 object.
 }
 \examples{
-\dontrun{
 library(move2)
+library(move2utils)
 library(sf)
 fishers <- mt_read(mt_example())
 fishers <- fishers[!st_is_empty(fishers), ]
-f1 <- fishers[mt_track_id(fishers) == "F1", ]
-f1_proj <- st_transform(f1, mt_aeqd_crs(f1))
-var_obj <- mt_dbbmm_variance(f1_proj, location_error = 25,
-                              window_size = 31, margin = 11)
+leroy <- filter_track_data(fishers, .track_id = "M1")
+leroy <- st_transform(leroy, mt_aeqd_crs(leroy))
+var_obj <- mt_dbbmm_variance(leroy, location_error = 25,
+                             window_size = 31, margin = 11)
 head(mt_motion_variance(var_obj))
-}
 
 }
 \seealso{

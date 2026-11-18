@@ -85,8 +85,9 @@ therefore still distribution-free; users can override with domain
 knowledge if the suggested value disagrees with species biology.
 }
 \details{
-K02-style spoof-boundary transitions produce speeds that sit in a
-yawning gap above the bulk of the distribution: on that track,
+The boundaries of a GPS-spoofing episode produce speeds that sit in a
+yawning gap above the bulk of the distribution: on one golden-eagle
+track with such an episode,
 99.99\\% of steps are below 32 m/s and the tail jumps directly to
 209 m/s with nothing in between.  Any reasonable break-detector
 places the suggested cap in that gap.  When no such gap exists
@@ -110,12 +111,16 @@ silent disagreement between the suggester and the flagger on
 multi-state tracks (the "rest vs flight" failure mode).
 }
 \examples{
-\dontrun{
+library(move2)
+library(move2utils)
+## a simulated track with known errors, shipped with the package
+tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+                              package = "move2utils"))
+track <- filter_track_data(tracks, .track_id = "CPF_C")
 v <- mt_suggest_speed_cap(track)
 if (!is.na(v)) track <- mt_flag_speed_cap(track, v_max = v)
 
 ## triangulate empirical, allometric and user estimates:
 mt_suggest_speed_cap(track, mass = 5, mode = "flying", v_max = 30)
-}
 
 }

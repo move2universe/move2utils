@@ -125,8 +125,9 @@ SEXP dbbmm2_omp(SEXP x, SEXP y, SEXP s, SEXP t, SEXP locEr,
 
 
 SEXP bgb_omp(SEXP x, SEXP y, SEXP sPara, SEXP sOrth, SEXP t, SEXP locEr,
-              SEXP xGrid, SEXP yGrid, SEXP dTT, SEXP ext2)
+              SEXP xGrid, SEXP yGrid, SEXP dTT, SEXP ext2, SEXP interest)
 {
+    PROTECT(interest = coerceVector(interest, LGLSXP));
     PROTECT(ext2 = coerceVector(ext2, REALSXP));
     PROTECT(dTT = coerceVector(dTT, REALSXP));
     R_len_t nLoc = length(x);
@@ -174,6 +175,9 @@ SEXP bgb_omp(SEXP x, SEXP y, SEXP sPara, SEXP sOrth, SEXP t, SEXP locEr,
         while (xt[k+1] < ti) {
             k++;
         }
+
+        /* only bridges of interest, as in dbbmm2_omp (mt_mask_segments()) */
+        if (!LOGICAL(interest)[k]) continue;
 
         /* Check for user interrupt every 100 time steps */
         if (++interrupt_counter % 100 == 0) {
@@ -248,6 +252,6 @@ SEXP bgb_omp(SEXP x, SEXP y, SEXP sPara, SEXP sOrth, SEXP t, SEXP locEr,
         }
     }
 
-    UNPROTECT(11);
+    UNPROTECT(12);
     return ans;
 }

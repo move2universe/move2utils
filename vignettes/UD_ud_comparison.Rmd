@@ -80,8 +80,8 @@ stk <- mt_dbbmm_ud(
   location_error = 25,
   window_size    = 31,
   margin         = 11,
-  raster         = 100,
-  ext            = 1.25
+  res         = 100,
+  ext_factor            = 1.25
 )
 names(stk)
 

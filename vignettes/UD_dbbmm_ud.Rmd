@@ -88,7 +88,7 @@ pre-made `SpatRaster` when you need UDs from different tracks on a
 shared grid.
 
 ```{r ud}
-ud <- mt_dbbmm_ud(var_obj, location_error = 20, raster = 100)
+ud <- mt_dbbmm_ud(var_obj, location_error = 20, res = 100)
 
 terra::plot(ud, main = "dBBMM utilisation distribution")
 ```
@@ -184,14 +184,14 @@ var_gap <- mt_dbbmm_variance(
 )
 
 ## the UD with no gap masking — probability bleeds across the gap
-ud_bleed <- mt_dbbmm_ud(var_gap, location_error = 20, raster = 100,
+ud_bleed <- mt_dbbmm_ud(var_gap, location_error = 20, res = 100,
                          verbose = FALSE)
 
 ## mask out locations whose following segment exceeds 300 minutes
 lag_gap <- as.numeric(mt_time_lags(leroy_gap, units = "min"))
 var_gap$interest[which(lag_gap > 300)] <- FALSE
 
-ud_masked <- mt_dbbmm_ud(var_gap, location_error = 20, raster = 100,
+ud_masked <- mt_dbbmm_ud(var_gap, location_error = 20, res = 100,
                           verbose = FALSE)
 
 ## for better visualization plotting the cumulative volume UD

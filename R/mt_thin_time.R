@@ -2,7 +2,10 @@
 #'
 #' Select a subset of fixes such that every successive retained pair has
 #' a time lag within `[interval - tolerance, interval + tolerance]`, and
-#' such that the number of retained fixes is maximised. The original
+#' such that the number of retained fixes is maximised. The exception is
+#' a gap in the data longer than `interval + tolerance`: the track is
+#' split there, so the lag across the gap stays as long as it was. The
+#' original
 #' `move2` object is returned whole with a logical column
 #' `thin_selected` marking retained fixes.
 #'

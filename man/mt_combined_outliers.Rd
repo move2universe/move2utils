@@ -64,12 +64,16 @@ routine cleaning, \code{mt_clean_track} is the recommended
 entry-point.
 }
 \examples{
-\dontrun{
+library(move2)
+library(move2utils)
+## a simulated track with known errors, shipped with the package
+tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+                              package = "move2utils"))
+track <- filter_track_data(tracks, .track_id = "CPF_C")
 ## Majority-vote flagging across three detection strategies:
 res <- mt_combined_outliers(track, min_votes = 2,
-                             scan = "forward-backward")
+                            scan = "forward-backward")
 table(res$vote_count)
-}
 
 }
 \references{

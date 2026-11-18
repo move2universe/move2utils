@@ -101,9 +101,15 @@
 #' a pure annotator -- users decide whether and how to filter.
 #'
 #' @examples
-#' \dontrun{
+#' library(move2)
+#' library(move2utils)
+#' ## a simulated track with known errors, shipped with the package
+#' tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+#'                               package = "move2utils"))
+#' track <- filter_track_data(tracks, .track_id = "CPF_C")
 #' ## Cascade output annotated with persistence scores
-#' clean <- mt_clean_track(track, mass = 5, mode = "flying", remove = FALSE)
+#' clean <- mt_clean_track(track, mass = 5, mode = "flying",
+#'                         remove = FALSE, plot = FALSE)
 #' annotated <- mt_persistence_score(clean)
 #'
 #' ## Class-aware filter (recommended pattern):
@@ -112,7 +118,7 @@
 #'   annotated$error_class %in% c("state_anomaly", "consensus") &
 #'   annotated$persistence_count < 3
 #' annotated$is_outlier[is_low_confidence] <- FALSE
-#' }
+#' table(annotated$is_outlier)
 #'
 #' @seealso \code{\link{mt_clean_track}} for the cascade orchestrator
 #'   whose \code{error_class} column gates the filtering rule;

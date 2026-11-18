@@ -13,10 +13,20 @@
 #'     \item An `mt_dbbmm_variance` object from [mt_dbbmm_variance()].
 #'     \item A named list of `mt_dbbmm_variance` objects (multi-track).
 #'   }
-#' @param raster A `terra::SpatRaster` defining the output grid, or a
-#'   numeric scalar giving the cell size in map units, or `NULL` to
-#'   auto-compute from `dim_size` and `ext`. For multi-track input with
-#'   `NULL`, a common grid is computed from the combined extent.
+#' @param raster A `terra::SpatRaster` template: the UD is computed for its
+#'   cells and returned on that grid. A template is never enlarged; if it is
+#'   too small for the bridges, the call stops and says on which sides; when
+#'   the template is in the CRS the computation runs in, it also gives the
+#'   `terra::extend()` call that fixes it. Give at most one of `raster`,
+#'   `res` and `dim_size`; with none, a grid is built from `dim_size = 100`.
+#'   (A number here is the deprecated way of giving `res`.)
+#' @param res Numeric. Cell size of an automatically built grid, in map
+#'   units of the compute CRS (metres). Cells are square. For multi-track
+#'   input, one common grid covers all tracks. A grid built from `res` or
+#'   `dim_size`, enlarged or not, may have at most
+#'   `getOption("move2utils.ud_max_cells", 1e8)` cells; above that the call
+#'   stops before anything is allocated (class
+#'   `move2utils_ud_grid_too_large`) and suggests a larger `res`.
 #' @param location_error Per-fix horizontal 1-sigma positional error,
 #'   **in metres**.  When \code{object} is a \code{move2} object, this is
 #'   forwarded to [mt_dbbmm_variance()] (see that function for the full
@@ -33,16 +43,22 @@
 #'   Only used when `object` is a `move2` object.
 #' @param window_size Integer (odd). Window size for variance estimation.
 #'   Only used when `object` is a `move2` object.
-#' @param ext Numeric. Extension factor for the bounding box when
-#'   auto-creating the raster. Increase if the C kernel reports that the
-#'   grid is not large enough. Default 0.5.
-#' @param dim_size Integer. Number of cells along the longest dimension
-#'   of the auto-generated raster. Higher values give finer resolution
-#'   but slower computation. Default 100.
+#' @param ext_factor Numeric, non-negative. Fraction of the track's
+#'   bounding-box width and height added on each side of an automatically
+#'   built grid. Default 0.5. If that box is too small for the bridges, the
+#'   grid is enlarged to fit them (see \dQuote{Grid}).
+#' @param dim_size Integer, at least 2. Number of cells along the longest
+#'   side of an automatically built grid. Higher values give finer
+#'   resolution but slower computation. Used when neither `raster` nor
+#'   `res` is given, with a default of 100.
+#' @param ext Deprecated former name of `ext_factor`. Renamed because in
+#'   `terra` `ext` denotes an extent.
 #' @param time_step Numeric or `NULL`. Time step for the Brownian bridge
 #'   integration, in minutes. Defaults to 1/15 of the minimum time lag.
 #'   Smaller values give more precise UDs but are slower.
-#' @param verbose Logical. If `TRUE`, print a computational size estimate.
+#' @param verbose Logical. If `TRUE`, print a computational size estimate,
+#'   report progress for multi-track input, and say when an automatic grid
+#'   had to be enlarged.
 #' @param ... Additional arguments passed to methods.
 #'
 #' @return For single-track input: a `terra::SpatRaster` where cell
@@ -75,6 +91,36 @@
 #' the surface; supply your data in a suitable metric projection if you want
 #' to avoid that step entirely.
 #'
+#' @section Grid:
+#' The grid is either the template given as `raster`, or it is built
+#' automatically: the track's bounding box, widened by `ext_factor`, divided
+#' into square cells of size `res` or into `dim_size` cells along its longest
+#' side. The kernel spreads each bridge time step over four standard
+#' deviations around the bridge mean, so the grid has to reach that far
+#' beyond the track. An automatic grid that does not is enlarged until it
+#' does: with `res` the cell size holds and cells are added; with `dim_size`
+#' the cell count holds and the cells grow. A grid that is large enough is
+#' used unchanged, so results are identical to earlier versions wherever
+#' those succeeded. A template is never enlarged: if it is too small the
+#' call stops and says on which sides. Grids need at least two rows and two
+#' columns.
+#'
+#' @section Coming from move:
+#' `mt_dbbmm_ud()` is the port of `move::brownian.bridge.dyn()`, and its C
+#' kernel is `move`'s. Arguments map as follows: a `RasterLayer` as `raster`
+#' becomes a `SpatRaster` template as `raster`; a number as `raster` (the
+#' cell size) becomes `res`; `dimSize` becomes `dim_size`; `ext` becomes
+#' `ext_factor`; `bbox` becomes a template,
+#' `raster = terra::rast(<extent>, resolution = <cell size>, crs = <crs>)`.
+#' The defaults differ: `move` uses `ext = 0.3` and `dimSize = 10`, this
+#' package `ext_factor = 0.5` and `dim_size = 100`. Where `move` stops
+#' because the grid is too small, an automatic grid is enlarged here
+#' instead. `move`'s kernel also accepts a grid on which its window reaches
+#' exactly one cell beyond the last row or column, and then reads and writes
+#' outside the grid; such a grid counts as too small here. Given the same
+#' grid and the same variance, the UD agrees with `move` to within 3e-9
+#' relative (measured on `move::leroy`).
+#'
 #' @references
 #' Kranstauber, B., Kays, R., LaPoint, S. D., Wikelski, M., & Safi, K.
 #' (2012). A dynamic Brownian bridge movement model to estimate utilization
@@ -86,26 +132,24 @@
 #'   to extract variances.
 #'
 #' @examples
-#' \dontrun{
 #' library(move2)
+#' library(move2utils)
 #' library(sf)
-#'
 #' fishers <- mt_read(mt_example())
 #' fishers <- fishers[!st_is_empty(fishers), ]
-#' f1 <- fishers[mt_track_id(fishers) == "F1", ]
-#' f1_proj <- st_transform(f1, mt_aeqd_crs(f1))
-#'
-#' # One-step
-#' ud <- mt_dbbmm_ud(f1_proj, location_error = 25,
-#'                    window_size = 31, margin = 11, ext = 0.85)
+#' leroy <- filter_track_data(fishers, .track_id = "M1")
+#' ## the first 200 fixes keep the example quick
+#' leroy <- st_transform(leroy, mt_aeqd_crs(leroy))[seq_len(200), ]
+#' ## One step: variance and UD
+#' ud <- mt_dbbmm_ud(leroy, location_error = 25,
+#'                   window_size = 31, margin = 11)
 #' terra::plot(ud)
 #'
-#' # Two-step (re-use variance for different raster settings)
-#' var_obj <- mt_dbbmm_variance(f1_proj, location_error = 25,
-#'                               window_size = 31, margin = 11)
-#' ud_fine <- mt_dbbmm_ud(var_obj, location_error = 25,
-#'                         dim_size = 500, ext = 1.25)
-#' }
+#' ## Two steps: fit the variance once, re-use it for other grids
+#' var_obj <- mt_dbbmm_variance(leroy, location_error = 25,
+#'                              window_size = 31, margin = 11)
+#' ud_fine <- mt_dbbmm_ud(var_obj, dim_size = 300, ext_factor = 1.25)
+#' ud_50m  <- mt_dbbmm_ud(var_obj, res = 50)
 #'
 #' @export
 mt_dbbmm_ud <- function(object,
@@ -113,11 +157,13 @@ mt_dbbmm_ud <- function(object,
                          location_error = NULL,
                          margin = 11,
                          window_size = 31,
-                         ext = 0.5,
-                         dim_size = 100,
+                         ext_factor = 0.5,
+                         dim_size = NULL,
                          time_step = NULL,
                          verbose = TRUE,
                          location_error_na = "median",
+                         res = NULL,
+                         ext = NULL,
                          ...) {
   UseMethod("mt_dbbmm_ud")
 }
@@ -128,12 +174,17 @@ mt_dbbmm_ud.move2 <- function(object,
                                 location_error = NULL,
                                 margin = 11,
                                 window_size = 31,
-                                ext = 0.5,
-                                dim_size = 100,
+                                ext_factor = 0.5,
+                                dim_size = NULL,
                                 time_step = NULL,
                                 verbose = TRUE,
                                 location_error_na = "median",
+                                res = NULL,
+                                ext = NULL,
                                 ...) {
+  ga <- .ud_grid_args(raster, res, dim_size, ext_factor, ext,
+                      ext_factor_given = !missing(ext_factor))
+  raster <- ga$raster
   ## CRS stratification (see ?mt_dbbmm_ud "Coordinate reference systems"):
   ## the UD is returned in the TARGET crs -- the env template's crs if one was
   ## supplied, else the movement's own input crs.  The bridge math runs in a
@@ -160,8 +211,9 @@ mt_dbbmm_ud.move2 <- function(object,
   ## Pass location_error = NULL so the variance object's stored per-fix
   ## vector is used unchanged.  Avoids re-passing a full-length user
   ## vector that no longer matches the per-track variance n_locs.
-  mt_dbbmm_ud(var_obj, raster = raster, location_error = NULL,
-               ext = ext, dim_size = dim_size, time_step = time_step,
+  mt_dbbmm_ud(var_obj, raster = ga$raster, res = ga$res,
+               dim_size = ga$dim_size, location_error = NULL,
+               ext_factor = ga$ext_factor, time_step = time_step,
                verbose = verbose, .target_crs = target)
 }
 
@@ -171,10 +223,13 @@ mt_dbbmm_ud.list <- function(object,
                                location_error = NULL,
                                margin = 11,
                                window_size = 31,
-                               ext = 0.5,
-                               dim_size = 100,
+                               ext_factor = 0.5,
+                               dim_size = NULL,
                                time_step = NULL,
                                verbose = TRUE,
+                               location_error_na = "median",
+                               res = NULL,
+                               ext = NULL,
                                ...,
                                .target_crs = NULL) {
   # Validate: must be a named list of mt_dbbmm_variance objects
@@ -182,6 +237,8 @@ mt_dbbmm_ud.list <- function(object,
     rlang::abort("List must contain mt_dbbmm_variance objects.",
                  class = "move2utils_dbbmm_ud_bad_list")
   }
+  ga <- .ud_grid_args(raster, res, dim_size, ext_factor, ext,
+                      ext_factor_given = !missing(ext_factor))
 
   ## location_error handling:
   ##   NULL                  -> each variance object uses its stored vector
@@ -219,24 +276,27 @@ mt_dbbmm_ud.list <- function(object,
   ## whole stack ONCE to the target crs -- warping per layer would let the
   ## reprojected grids diverge and break the stack.
   compute_crs <- sf::st_crs(object[[1]]$track_data$crs)
-  user_template <- if (inherits(raster, "SpatRaster")) raster else NULL
+  user_template <- ga$raster
 
-  if (is.null(raster) || (is.numeric(raster) && length(raster) == 1)) {
+  ## the common grid has to hold every track's kernel windows
+  kins <- lapply(names(object), function(nm) {
+    .dbbmm_kernel_inputs(object[[nm]], le_per_track[[nm]], time_step)
+  })
+
+  if (is.null(user_template)) {
     all_x <- unlist(lapply(object, function(v) v$track_data$x))
     all_y <- unlist(lapply(object, function(v) v$track_data$y))
     pts <- sf::st_as_sf(data.frame(x = all_x, y = all_y),
                          coords = c("x", "y"), crs = compute_crs)
-    if (is.numeric(raster)) {
-      common_raster <- .make_raster(pts, cell_size = raster, ext = ext)
-    } else {
-      common_raster <- .make_raster(pts, dim_size = dim_size, ext = ext)
-    }
-  } else if (sf::st_crs(terra::crs(raster)) != compute_crs) {
+    common_raster <- .ud_auto_grid(pts, ga, kins, verbose = verbose)
+  } else if (sf::st_crs(terra::crs(user_template)) != compute_crs) {
     ## explicit env grid in another crs -> reproject into the compute crs for
     ## the kernel; the stack is warped back onto the env grid below
-    common_raster <- terra::project(raster, compute_crs$wkt)
+    common_raster <- terra::project(user_template, compute_crs$wkt)
+    .ud_check_template(common_raster, kins, reprojected = TRUE)
   } else {
-    common_raster <- raster
+    common_raster <- user_template
+    .ud_check_template(common_raster, kins, reprojected = FALSE)
   }
 
   # Compute UD for each track on the common grid, in the compute crs
@@ -244,7 +304,7 @@ mt_dbbmm_ud.list <- function(object,
     if (verbose) message("Computing UD for track: ", nm)
     mt_dbbmm_ud(object[[nm]], raster = common_raster,
                  location_error = le_per_track[[nm]],
-                 ext = ext, dim_size = dim_size,
+                 ext_factor = ga$ext_factor,
                  time_step = time_step, verbose = FALSE,
                  .restore = FALSE)
   })
@@ -276,70 +336,48 @@ mt_dbbmm_ud.mt_dbbmm_variance <- function(object,
                                             location_error = NULL,
                                             margin = 11,
                                             window_size = 31,
-                                            ext = 0.5,
-                                            dim_size = 100,
+                                            ext_factor = 0.5,
+                                            dim_size = NULL,
                                             time_step = NULL,
                                             verbose = TRUE,
+                                            location_error_na = "median",
+                                            res = NULL,
+                                            ext = NULL,
                                             ...,
                                             .target_crs = NULL,
                                             .restore = TRUE) {
+  ga <- .ud_grid_args(raster, res, dim_size, ext_factor, ext,
+                      ext_factor_given = !missing(ext_factor))
   td <- object$track_data
-  n <- td$n_locs
-  if (is.null(location_error)) {
-    ## Pull from the stored per-fix vector if present; fall back to 0
-    ## for variance objects fit before the storage field existed
-    ## (backward compatibility).
-    location_error <- if (!is.null(td$location_error)) {
-      td$location_error
-    } else {
-      rep(0, n)
-    }
-  } else {
-    location_error <- .expand_loc_error(location_error, n)
-  }
+
+  ## The kernel's exact inputs, shared with the grid-bounds probe so that the
+  ## grid is checked against precisely what the kernel will evaluate.
+  kin <- .dbbmm_kernel_inputs(object, location_error, time_step)
 
   ## CRS stratification: build the kernel grid in the metric compute crs
   ## (td$crs) and learn where to warp the result (see .ud_resolve_grid).
-  grid_res <- .ud_resolve_grid(raster, td, .target_crs, .restore,
-                               dim_size, ext)
+  grid_res <- .ud_resolve_grid(ga, list(kin), td, .target_crs, .restore,
+                               verbose = verbose)
   raster   <- grid_res$grid
 
-  time_lag <- c(diff(td$time_mins), 0)
-
-  if (is.null(time_step)) {
-    time_step <- min(time_lag[-length(time_lag)]) / 15
-  }
-
   if (verbose) {
-    comp_size <- terra::ncell(raster) * (sum(time_lag[object$interest]) / time_step)
+    comp_size <- terra::ncell(raster) *
+      (sum(kin$time_lag[object$interest]) / kin$time_step)
     message(sprintf("Computational size: %.1e", comp_size))
   }
 
-  x_grid <- terra::xFromCol(raster, 1:terra::ncol(raster))
-  y_grid <- terra::yFromRow(raster, terra::nrow(raster):1)
-
-  ## NB: dbbmm2_omp's third argument is the per-fix BM variance
-  ## (sigma^2), not the standard deviation -- consistent with
-  ## the legacy `move::brownian.motion.variance.dyn` -> @means slot
-  ## (also variance scale) and with mt_motion_variance() which
-  ## returns variance for both dBBMM and dBGB (the dBGB accessor
-  ## squares the internally-stored sigmas).
-  variance <- c(object$variance, 0)
-  variance[is.na(variance)] <- 0
-
+  gv <- .ud_grid_vectors(raster, "dbbmm")
   ans <- .Call(
     "dbbmm2_omp",
-    td$x, td$y, variance,
-    (td$time_mins - min(td$time_mins)),
-    location_error, x_grid, y_grid,
-    time_step, 4, object$interest
+    kin$x, kin$y, kin$s1, kin$t, kin$le, gv$x, gv$y,
+    kin$time_step, kin$ext, kin$interest
   )
 
   total <- sum(ans)
   if (total == 0 || !is.finite(total)) {
     rlang::abort(paste0(
       "UD computation produced zero or non-finite values. ",
-      "The raster extent may not overlap the track, or ext may be too large."),
+      "The raster extent may not overlap the track."),
       class = "move2utils_dbbmm_ud_zero_total_mass")
   }
   ans <- ans / total

@@ -71,7 +71,7 @@ test_that("ud_outer_probability is invariant to the query points' CRS", {
   f   <- read_f1(200L)
   ud  <- suppressMessages(mt_dbbmm_ud(
     sf::st_transform(f, move2::mt_aeqd_crs(f)),
-    location_error = 20, dim_size = 80, ext = 1.5))
+    location_error = 20, dim_size = 80, ext_factor = 1.5))
   op_native <- ud_outer_probability(
     sf::st_transform(f, sf::st_crs(terra::crs(ud))), ud)  # already in UD CRS
   op_longlat <- ud_outer_probability(f, ud)               # lon/lat -> auto-reproject

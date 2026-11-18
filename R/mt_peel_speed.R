@@ -10,7 +10,7 @@
 #'
 #' @details
 #' This is the primitive that catches coherent multi-fix errors that
-#' per-fix detectors cannot resolve.  A K02-style spoof of 175 fixes
+#' per-fix detectors cannot resolve.  A GPS-spoofing episode of 175 fixes
 #' at a fake location has small step speeds internally (the fake
 #' trajectory is self-consistent) and only the jump-out / jump-back
 #' boundaries violate a physiological cap.  Peeling those boundaries
@@ -94,7 +94,7 @@
 #' discriminate between the spoof-interior boundary fix and the
 #' clean-track boundary fix.  The peel may then walk inward from one
 #' side only, or oscillate.  For known cluster-outlier datasets
-#' (Argos PTT spoof, K02-style), the symmetric default is the
+#' (Argos PTT or GPS spoofing), the symmetric default is the
 #' robust choice.
 #'
 #' @return The input \code{x} with added columns:
@@ -125,12 +125,16 @@
 #' supplied.
 #'
 #' @examples
-#' \dontrun{
-#' ## Eagle with a known spoof cluster; physiological cap ~30 m/s.
-#' clean <- mt_peel_speed(eagle_track, v_max = 30)
+#' library(move2)
+#' library(move2utils)
+#' ## a simulated track with known errors, shipped with the package
+#' tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+#'                               package = "move2utils"))
+#' track <- filter_track_data(tracks, .track_id = "CPF_C")
+#' ## physiological cap ~30 m/s
+#' clean <- mt_peel_speed(track, v_max = 30)
 #' summary(clean$is_outlier)
 #' table(clean$peel_iteration, useNA = "ifany")
-#' }
 #'
 #' @importFrom move2 mt_track_id mt_time
 #' @importFrom sf st_coordinates st_is_longlat

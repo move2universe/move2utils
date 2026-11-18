@@ -40,7 +40,7 @@ test_that("multi-track UD returns multi-layer SpatRaster", {
   var_list <- mt_dbbmm_variance(two_proj, location_error = 25,
                                  window_size = 31, margin = 11)
   ud_stack <- mt_dbbmm_ud(var_list, location_error = 25,
-                            ext = 1.0, dim_size = 100, verbose = FALSE)
+                            ext_factor = 1.0, dim_size = 100, verbose = FALSE)
 
   expect_s4_class(ud_stack, "SpatRaster")
   expect_equal(terra::nlyr(ud_stack), 2)

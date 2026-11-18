@@ -75,8 +75,8 @@
 #'   length-1 `dist` — use `as.numeric()` to extract the scalar.
 #'
 #' @examples
-#' \dontrun{
 #' library(move2)
+#' library(move2utils)
 #' library(sf)
 #' fishers <- mt_read(mt_example())
 #' fishers <- fishers[!st_is_empty(fishers), ]
@@ -87,17 +87,24 @@
 #'   lapply(ids, function(i) fishers[mt_track_id(fishers) == i, ][1:300, ])
 #' )
 #' sub_p <- st_transform(sub, mt_aeqd_crs(sub))
+#' ## time_step = 5 (minutes): the default, a fifteenth of the shortest
+#' ## time lag (0.4 min in F2), would make the UDs slow to compute
 #' stk <- mt_dbbmm_ud(sub_p, location_error = 25,
-#'                     window_size = 31, margin = 11,
-#'                     raster = 100, ext = 1.25)
+#'                    window_size = 31, margin = 11,
+#'                    res = 100, ext_factor = 1.25, time_step = 5)
 #'
 #' d_sink <- emd(stk)                      # fast, default
 #' d_sink
 #'
-#' ## Exact solver — requires the `emdist` package:
+#' ## Exact solver: requires the `emdist` package, and is practical only
+#' ## on coarse grids
 #' if (requireNamespace("emdist", quietly = TRUE)) {
-#'   d_exact <- emd(stk, method = "exact")
-#' }
+#'   stk_coarse <- mt_dbbmm_ud(sub_p, location_error = 25,
+#'                             window_size = 31, margin = 11,
+#'                             dim_size = 30, ext_factor = 1.25,
+#'                             time_step = 5)
+#'   d_exact <- emd(stk_coarse, method = "exact")
+#'   d_exact
 #' }
 #'
 #' @references

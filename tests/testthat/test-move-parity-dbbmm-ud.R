@@ -1,12 +1,19 @@
 ## Cross-package numerical parity: dBBMM UD.
 ##
-## After the variance step agrees with move:: at machine precision (see
-## test-move-parity-dbbmm-variance.R), the UD step is a deterministic
-## grid evaluation against the same dbbmm2() C kernel that move ships
-## (extended in move2utils with an `interest` per-segment gating
-## argument, default-on so behaviour is unchanged when no gating is
-## requested).  We check that the UD raster cell values match cell-by-
-## cell to within machine precision.
+## The UD step is a deterministic grid evaluation against the same dbbmm2()
+## C kernel that move ships (extended in move2utils with an `interest`
+## per-segment gating argument, default-on so behaviour is unchanged when no
+## gating is requested).
+##
+## What agreement there actually is (measured 2026-11-15 on move::leroy,
+## move 4.2.7, same grid): the grids are identical; given move's own
+## variance, 90 % of UD cells are bit-identical and the rest agree within
+## 2.8e-9 relative.  The variance step itself agrees to a median 1e-8
+## relative (optimiser tolerance; near-zero variances differ by the
+## optimiser's floor), so end to end the UDs agree to about 9e-8 relative.
+## That is NOT machine precision, which this header used to claim.  The
+## assertion below is weaker still: it compares *sorted* cell masses, which
+## cannot detect a shifted or permuted grid.
 
 test_that("mt_dbbmm_ud matches move::brownian.bridge.dyn on move::leroy", {
   skip_on_cran()
@@ -55,7 +62,7 @@ test_that("mt_dbbmm_ud matches move::brownian.bridge.dyn on move::leroy", {
   our_var <- mt_dbbmm_variance(
     leroy_m2_proj,
     location_error = loc_err, window_size = ws, margin = margin)
-  our_ud <- mt_dbbmm_ud(our_var, raster = raster_px, ext = ext_pad)
+  our_ud <- mt_dbbmm_ud(our_var, res = raster_px, ext_factor = ext_pad)
   our_vals <- terra::values(our_ud)
 
   ## Both UDs should be normalised to sum-to-one over their grid; their

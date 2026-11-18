@@ -19,7 +19,10 @@ extern SEXP bgb_var_break_track_c(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 /* OpenMP-parallelised grid kernels */
 extern SEXP dbbmm2_omp(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP bgb_omp(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP bgb_omp(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+
+/* Grid bounds of the two kernels, without the densities */
+extern SEXP ud_grid_probe(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"bgb",                  (DL_FUNC) &bgb,                  10},
@@ -31,7 +34,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"bgb_var_window_c",     (DL_FUNC) &bgb_var_window_c,      5},
     {"bgb_var_break_track_c",(DL_FUNC) &bgb_var_break_track_c, 6},
     {"dbbmm2_omp",           (DL_FUNC) &dbbmm2_omp,           10},
-    {"bgb_omp",              (DL_FUNC) &bgb_omp,              10},
+    {"bgb_omp",              (DL_FUNC) &bgb_omp,              11},
+    {"ud_grid_probe",        (DL_FUNC) &ud_grid_probe,        12},
     {NULL, NULL, 0}
 };
 

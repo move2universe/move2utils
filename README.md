@@ -1,13 +1,12 @@
 # move2utils
 
 <!-- badges: start -->
-[![version](https://img.shields.io/badge/version-0.4.5-blue.svg)](NEWS.md)
-[![pipeline status](https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils/badges/main/pipeline.svg)](https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils/-/pipelines)
+[![version](https://img.shields.io/badge/version-0.4.6-blue.svg)](NEWS.md)
 [![License: GPL (>= 3)](https://img.shields.io/badge/license-GPL%20(%3E%3D%203)-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![R >= 4.5.0](https://img.shields.io/badge/R-%3E%3D%204.5.0-blue.svg)](https://www.r-project.org/)
 <!-- badges: end -->
 
-> **Public release.** The source of truth for `move2utils` is its development repository on [MPCDF GitLab](https://gitlab.mpcdf.mpg.de/anenvi/r-packages/move2utils); each release is mirrored to [GitHub](https://github.com/move2universe/move2utils) for public use. Documentation: <https://move2universe.github.io/move2utils>. Please report bugs and ask questions by [opening an issue](https://github.com/move2universe/move2utils/issues).
+> **Public release.** `move2utils` is developed in an MPCDF-internal GitLab repository; each release is published here on [GitHub](https://github.com/move2universe/move2utils) for public use. Documentation: <https://move2universe.github.io/move2utils>. Please report bugs and ask questions by [opening an issue](https://github.com/move2universe/move2utils/issues).
 
 Utility functions for animal-movement data stored as [`move2`](https://bartk.gitlab.io/move2/) objects. A home for a handful of ports from the legacy `move` package, together with a small amount of novel scientific machinery described in a companion paper.
 
@@ -33,11 +32,8 @@ All functions operate directly on `move2` objects and preserve CRS, track IDs, t
 ```r
 # install.packages("remotes")
 
-# MPCDF GitLab (the canonical home; CI builds the docs site here)
 # GitHub (public release)
 remotes::install_github("move2universe/move2utils", build_vignettes = TRUE)
-
-remotes::install_gitlab("anenvi/r-packages/move2utils", host = "gitlab.mpcdf.mpg.de", build_vignettes=TRUE)
 ```
 
 - **Required:** `move2`, `sf`, `terra`, `units`.
@@ -63,15 +59,16 @@ leroy   <- fishers[mt_track_id(fishers) == "M1", ]
 ## error in metres; `window_size` / `margin` set the moving window for the
 ## variance breakpoint search (tune with `mt_suggest_dbbmm_window()`).
 var <- mt_dbbmm_variance(leroy, location_error = 25, window_size = 31, margin = 7)
-ud  <- mt_dbbmm_ud(var, dim_size = 600, ext = 1)        # isotropic UD raster
+ud  <- mt_dbbmm_ud(var, dim_size = 600, ext_factor = 1) # isotropic UD raster
 vol <- ud_volume(ud)                                    # cumulative-volume space
 vol[vol[] > 0.99] <- NA                                 # keep the 99% range
 vol <- terra::trim(vol)                                 # crop to the occupied area
 
-## Directional (bivariate-Gaussian) variant. The directional kernel is
-## elongated, so it needs a slightly larger `ext` to fit the raster.
+## Directional (bivariate-Gaussian) variant. Its kernel reaches further
+## along the direction of travel, so a larger `ext_factor` pads the grid
+## more; a grid too small for the bridges is enlarged automatically.
 var_d <- mt_dbgb_variance(leroy, location_error = 25, window_size = 31, margin = 7)
-ud_d  <- mt_dbgb_ud(var_d, dim_size = 600, ext = 1.5)
+ud_d  <- mt_dbgb_ud(var_d, dim_size = 600, ext_factor = 1.5)
 vol_d <- ud_volume(ud_d)
 vol_d[vol_d[] > 0.99] <- NA
 vol_d <- terra::trim(vol_d)

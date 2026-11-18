@@ -41,24 +41,21 @@ fan the UD out across regions the animal never visited. See
 example on the fisher data.
 }
 \examples{
-\dontrun{
 library(move2)
+library(move2utils)
 library(sf)
-library(units)
-
 fishers <- mt_read(mt_example())
 fishers <- fishers[!st_is_empty(fishers), ]
-leroy   <- fishers[mt_track_id(fishers) == "M1", ]
-leroy   <- st_transform(leroy, mt_aeqd_crs(leroy))
-
-lag_h <- as.numeric(set_units(mt_time_lags(leroy), "hour"))
+leroy <- filter_track_data(fishers, .track_id = "M1")
+leroy <- st_transform(leroy, mt_aeqd_crs(leroy))
+## exclude the bridges across gaps longer than 6 h
+lag_h <- as.numeric(mt_time_lags(leroy, units = "hours"))
 long_gap <- which(lag_h > 6)
 
 var <- mt_dbbmm_variance(leroy, location_error = 25,
-                          window_size = 31, margin = 11)
+                         window_size = 31, margin = 11)
 var <- mt_mask_segments(var, long_gap)
-ud  <- mt_dbbmm_ud(var, location_error = 25, raster = 100, ext = 0.5)
-}
+ud  <- mt_dbbmm_ud(var, location_error = 25, res = 100)
 
 }
 \seealso{

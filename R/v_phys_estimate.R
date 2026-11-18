@@ -90,15 +90,19 @@
 #' ## bottlenose dolphin, ~250 kg
 #' v_phys_estimate(250, "swimming")
 #'
-#' \dontrun{
+#' library(move2)
+#' library(move2utils)
+#' ## a simulated track with known errors, shipped with the package
+#' tracks <- mt_read(system.file("extdata/synthetic_tracks.csv.gz",
+#'                               package = "move2utils"))
+#' track <- filter_track_data(tracks, .track_id = "CPF_C")
 #' ## use as the principled v_max default
 #' clean <- mt_clean_track(track,
-#'                          v_max = v_phys_estimate(mass = 5,
-#'                                                      mode = "flying"))
+#'                         v_max = v_phys_estimate(mass = 5, mode = "flying"),
+#'                         plot = FALSE)
 #'
 #' ## equivalent and more idiomatic: pass (mass, mode) directly
-#' clean <- mt_clean_track(track, mass = 5, mode = "flying")
-#' }
+#' clean <- mt_clean_track(track, mass = 5, mode = "flying", plot = FALSE)
 #'
 #' @references
 #' Hirt, M. R., Jetz, W., Rall, B. C., Brose, U. (2017).  A general
